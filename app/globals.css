@@ -1,51 +1,117 @@
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   UFM â€“ Äáº¡i há»c TĂ i chĂ­nh â€“ Marketing
-   globals.css
-   Color Palette: UFM Blue / UFM Gold / Cloud Dancer
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography/src/index.js";
 
+@theme {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 211 100% 29%;
+    /* UFM Blue 005496 approx */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* globals.css
+   Color Palette: UFM Blue / UFM Gold / Cloud Dancer
 /* ══════════════════════════════════════
-   SF Compact Display — Apple Font
+   Plus Jakarta Sans — Modern Geometric Sans
    ══════════════════════════════════════ */
+
 @font-face {
-  font-family: 'SF Compact Display';
-  src: url('/fonts/SFCompactDisplay-Light.otf') format('opentype');
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-Light.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'SF Compact Display';
-  src: url('/fonts/SFCompactDisplay-Regular.otf') format('opentype');
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'SF Compact Display';
-  src: url('/fonts/SFCompactDisplay-Medium.otf') format('opentype');
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'SF Compact Display';
-  src: url('/fonts/SFCompactDisplay-Semibold.otf') format('opentype');
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-SemiBold.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 
-
-
-
-
-
-
-/* â”€â”€â”€ Custom Properties â”€â”€â”€ */
 :root {
   --ufm-blue: #005496;
   --ufm-gold: #ffd200;
@@ -69,9 +135,9 @@
   --gray-800: #171414;
   --dark: #0d1b2a;
 
-  --font-body: 'SF Compact Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-heading: 'SF Compact Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'SF Compact Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --transition-fast: 0.2s ease;
   --transition-normal: 0.35s ease;
@@ -80,14 +146,7 @@
   --container-padding: 2rem;
 }
 
-/* â”€â”€â”€ Reset â”€â”€â”€ */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* â”€â”€â”€ Reset (Tailwind Preflight handles box-sizing, margin, padding correctly) â”€â”€â”€ */
 
 html {
   scroll-behavior: smooth;
@@ -96,7 +155,7 @@ html {
 
 body {
   font-family: var(--font-body);
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text-dark);
   background: var(--white);
   line-height: 1.6;
@@ -6204,4 +6263,186 @@ ol {
   .search-input {
     font-size: 1rem;
   }
+}
+
+/* ═══════════════════════════════════════
+   AI CHAT LANDING — Futuristic Effects
+   ═══════════════════════════════════════ */
+
+@keyframes ai-grid-scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes ai-orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(20px, -30px) scale(1.05); }
+  50% { transform: translate(-10px, -50px) scale(0.95); }
+  75% { transform: translate(-30px, -20px) scale(1.03); }
+}
+
+@keyframes ai-pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+
+@keyframes ai-data-flow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+@keyframes ai-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes ai-neural-dash {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes ai-glow-breathe {
+  0%, 100% { opacity: 0.3; filter: blur(40px); }
+  50% { opacity: 0.6; filter: blur(60px); }
+}
+
+@keyframes ai-typing-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes ai-float-particle {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+  25% { transform: translateY(-15px) translateX(5px); opacity: 0.7; }
+  50% { transform: translateY(-25px) translateX(-5px); opacity: 0.5; }
+  75% { transform: translateY(-10px) translateX(10px); opacity: 0.8; }
+}
+
+@keyframes ai-border-trace {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes ai-counter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ai-grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 84, 150, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 84, 150, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.ai-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.ai-shimmer-text {
+  background: linear-gradient(
+    110deg,
+    #005496 0%,
+    #0284c7 25%,
+    #38bdf8 50%,
+    #0284c7 75%,
+    #005496 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ai-shimmer 4s linear infinite;
+}
+
+.ai-gradient-border {
+  background: linear-gradient(90deg, #005496, #0284c7, #38bdf8, #0284c7, #005496);
+  background-size: 300% 100%;
+  animation: ai-border-trace 6s ease infinite;
+}
+
+/* ══════════════════════════════════════
+   CHATBOT WIDGET — Premium Animations
+   ══════════════════════════════════════ */
+
+/* Typing dots — smooth bounce */
+@keyframes cbDot {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+/* Also keep old name for /chat/create compatibility */
+@keyframes chatDotBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+/* Floating button pulse */
+@keyframes chatPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Chat body scrollbar — near-invisible */
+.cb-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.08) transparent;
+}
+.cb-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+.cb-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cb-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 3px;
+}
+.cb-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.18);
+}
+
+/* Chatbot markdown container reset */
+.cb-md {
+  font-size: 13.5px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.cb-md > *:first-child {
+  margin-top: 0;
+}
+.cb-md > *:last-child {
+  margin-bottom: 0;
+}
+.cb-md ul,
+.cb-md ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.cb-md a {
+  text-decoration-skip-ink: auto;
 }

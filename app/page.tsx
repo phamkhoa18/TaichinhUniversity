@@ -18,6 +18,7 @@ import SchoolsSection from '@/app/components/SchoolsSection';
 import CtaSection from '@/app/components/CtaSection';
 import VideoHighlight from '@/app/components/VideoHighlight';
 import ConsultationSection from '@/app/components/ConsultationSection';
+import Chatbot from '@/app/components/Chatbot';
 
 /* ─── Framer Motion ─── */
 const fadeUp = {
@@ -598,6 +599,9 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* ══════════════  CHATBOT UI  ══════════════ */}
+      <Chatbot />
     </>
   );
 }

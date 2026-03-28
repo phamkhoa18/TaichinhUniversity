@@ -1,0 +1,728 @@
+================================================================================
+     PHÂN TÍCH TỔNG HỢP — HỆ THỐNG QUẢN TRỊ SAU ĐẠI HỌC UFM
+     Website gốc: https://daotaosdh.ufm.edu.vn/
+     Ngày phân tích: 24/03/2026
+================================================================================
+
+
+========================================
+PHẦN 0 — TỔNG QUAN HỆ THỐNG
+========================================
+
+Website "Viện Đào tạo Sau Đại học — UFM" cần 3 sản phẩm riêng biệt:
+
+  [1] WEBSITE CÔNG KHAI      → daotaosdh.ufm.edu.vn/
+      - Thông tin tuyển sinh Thạc sĩ & Tiến sĩ
+      - Tin tức, thông báo, văn bản
+      - Chương trình đào tạo, TKB
+
+  [2] ADMIN PANEL            → daotaosdh.ufm.edu.vn/admin
+      - Nội bộ: quản lý toàn bộ nội dung website
+      - Quản lý hồ sơ tuyển sinh
+      - Quản lý người dùng & phân quyền
+
+  [3] PORTAL HỌC VIÊN        → daotaosdh.ufm.edu.vn/portal
+      - Học viên đăng nhập cá nhân
+      - Xem TKB, điểm, học phí
+      - Nộp đơn, xem thông báo riêng
+
+THỨ TỰ LÀM ĐỀ XUẤT:
+  Bước 1: Admin Panel (nhập dữ liệu trước)
+  Bước 2: Website Công khai (hiển thị dữ liệu từ Admin)
+  Bước 3: Portal Học viên (phức tạp nhất, làm sau)
+
+
+========================================
+PHẦN 1 — CÁC MODULE TRONG ADMIN PANEL
+========================================
+
+Tổng cộng 10 module chính:
+
+------------------------------------------------------------
+MODULE 1: DASHBOARD (Tổng quan)
+------------------------------------------------------------
+Mục đích: Màn hình đầu tiên khi đăng nhập — cái nhìn toàn cảnh nhanh
+
+Các thành phần:
+  - Thống kê nhanh (KPI cards):
+      + Tổng hồ sơ tuyển sinh đang chờ duyệt
+      + Tổng học viên đang học (Thạc sĩ / Tiến sĩ)
+      + Số bài đăng mới trong tuần
+      + Số văn bản vừa thêm
+  - Biểu đồ tuyển sinh: theo tháng / năm / chuyên ngành
+  - Hoạt động gần đây: ai vừa thêm/sửa/xóa gì
+  - Thông báo hệ thống: nội dung sắp hết hạn, hồ sơ cần duyệt
+
+Ưu tiên: P1 (làm đầu tiên)
+
+------------------------------------------------------------
+MODULE 2: THÔNG BÁO & TIN TỨC
+------------------------------------------------------------
+Mục đích: Quản lý toàn bộ bài viết — thông báo, tin tức, sự kiện
+Tương ứng menu website: "Thông báo"
+
+Tính năng:
+  - Danh sách bài đăng:
+      + Bộ lọc theo danh mục, trạng thái, ngày đăng, người tạo
+      + Tìm kiếm theo tiêu đề
+      + Phân trang
+  - Thêm / Sửa bài viết:
+      + Rich text editor (hỗ trợ ảnh, bảng, tiêu đề H1-H6, in đậm, danh sách)
+      + Upload ảnh thumbnail
+      + Upload file đính kèm (PDF, Word)
+      + Chọn danh mục (Thông báo chung / Thông báo học viên / Tin tức / Sự kiện)
+      + Tag/nhãn tùy chỉnh
+  - Trạng thái bài viết:
+      + Bản nháp (Draft) — chỉ người tạo thấy
+      + Chờ duyệt (Pending) — gửi cho Admin xem xét
+      + Đã xuất bản (Published) — hiển thị public
+      + Ẩn (Hidden) — không hiển thị nhưng giữ lại
+  - Tính năng bổ sung:
+      + Ghim bài quan trọng lên đầu danh sách
+      + Lên lịch tự động publish theo ngày giờ
+      + Xem trước bài trước khi đăng
+      + Lịch sử chỉnh sửa (ai sửa gì, lúc nào)
+
+Ưu tiên: P1
+
+------------------------------------------------------------
+MODULE 3: CHƯƠNG TRÌNH ĐÀO TẠO
+------------------------------------------------------------
+Mục đích: Quản lý các chuyên ngành Thạc sĩ & Tiến sĩ
+Tương ứng menu website: "Đào tạo" → Thạc sĩ / Tiến sĩ
+
+Tính năng:
+  - Danh sách chuyên ngành:
+      + Phân tab: Thạc sĩ / Tiến sĩ
+      + Hiển thị: mã ngành, tên ngành, chỉ tiêu, trạng thái
+  - Chi tiết chương trình:
+      + Tên chuyên ngành, mã ngành (VD: 8340201)
+      + Mô tả tổng quan chương trình
+      + Chuẩn đầu ra
+      + Thời gian đào tạo (1.5 năm / 2 năm / 3 năm)
+      + Học phí dự kiến
+      + Chỉ tiêu tuyển sinh mỗi đợt
+  - Upload tài liệu:
+      + File đề cương chương trình (PDF)
+      + File khung chương trình đào tạo
+  - Trạng thái tuyển sinh:
+      + Đang tuyển sinh
+      + Tạm dừng
+      + Hết chỉ tiêu
+
+Ưu tiên: P2
+
+------------------------------------------------------------
+MODULE 4: TUYỂN SINH
+------------------------------------------------------------
+Mục đích: Quản lý đợt tuyển sinh và hồ sơ ứng viên
+Tương ứng menu website: "Tuyển sinh" → Thạc sĩ / Tiến sĩ
+
+Tính năng:
+
+  A. Quản lý Đợt Tuyển sinh:
+      + Tạo đợt mới: tên đợt, thời gian nhận hồ sơ, ngày thi, chuyên ngành
+      + Mở / Đóng đợt tuyển sinh
+      + Upload: thông báo tuyển sinh, đề cương ôn thi
+      + Số lượng hồ sơ đã nhận / còn lại
+
+  B. Quản lý Hồ sơ Ứng viên:
+      + Danh sách ứng viên theo đợt
+      + Bộ lọc: trạng thái, chuyên ngành, quận/tỉnh
+      + Chi tiết hồ sơ:
+          - Thông tin cá nhân (họ tên, CCCD, ngày sinh, SĐT, email)
+          - Bằng cấp (bằng đại học, chuyên ngành gốc, trường, năm tốt nghiệp)
+          - File hồ sơ đính kèm (ảnh, bằng cấp scan, CCCD scan)
+          - Ghi chú nội bộ
+      + Trạng thái hồ sơ:
+          - Chờ xét duyệt
+          - Đủ điều kiện dự thi
+          - Trúng tuyển
+          - Không đủ điều kiện
+          - Từ chối
+      + Xuất danh sách: export Excel theo đợt / trạng thái
+      + Gửi email kết quả tự động (template sẵn)
+
+Ưu tiên: P1
+
+------------------------------------------------------------
+MODULE 5: ĐÀO TẠO NGẮN HẠN
+------------------------------------------------------------
+Mục đích: Quản lý các lớp bổ sung kiến thức & khóa học ngắn hạn
+Tương ứng menu website: "Đào tạo ngắn hạn"
+
+Tính năng:
+  - Danh sách lớp học:
+      + Tên lớp, số buổi, thời lượng, học phí, số lượng học viên tối đa
+  - Chi tiết lớp:
+      + Mô tả nội dung
+      + Lịch học dự kiến
+      + Giảng viên phụ trách
+      + Địa điểm
+  - Trạng thái:
+      + Sắp khai giảng
+      + Đang học
+      + Đã kết thúc
+      + Tạm huỷ
+  - Quản lý đăng ký:
+      + Danh sách người đã đăng ký từng lớp
+      + Xác nhận / Từ chối đăng ký
+      + Export danh sách học viên
+
+Ưu tiên: P2
+
+------------------------------------------------------------
+MODULE 6: VĂN BẢN — TÀI LIỆU
+------------------------------------------------------------
+Mục đích: Kho lưu trữ văn bản chính thức của Viện
+Tương ứng menu website: "Văn bản"
+
+Tính năng:
+  - Thư viện tài liệu:
+      + Hiển thị dạng lưới hoặc danh sách
+      + Tìm kiếm: theo tên, loại, ngày ban hành
+      + Phân loại thư mục:
+          - Quy định - Quy chế
+          - Kế hoạch đào tạo
+          - Quy trình
+          - Biểu mẫu / Đơn từ
+          - Hướng dẫn
+  - Thêm văn bản:
+      + Tên văn bản
+      + Số hiệu văn bản
+      + Ngày ban hành
+      + Đơn vị ban hành
+      + Upload file PDF (bắt buộc)
+      + Phân loại danh mục
+  - Tính năng nâng cao:
+      + Xem trước (preview) PDF ngay trong admin
+      + Thay thế file mới (giữ lịch sử phiên bản cũ)
+      + Tải xuống file
+
+Ưu tiên: P2
+
+------------------------------------------------------------
+MODULE 7: THỜI KHÓA BIỂU
+------------------------------------------------------------
+Mục đích: Quản lý và công bố lịch học cho học viên
+Tương ứng menu website: "Đào tạo" → "Thời khóa biểu"
+
+Tính năng:
+  - Nhập TKB:
+      + Nhập thủ công từng môn
+      + Upload file Excel theo template chuẩn
+  - Xem TKB:
+      + Theo tuần / theo tháng
+      + Lọc theo lớp / chuyên ngành / học kỳ
+  - Quản lý:
+      + Phân môn học cho giảng viên
+      + Phòng học / hình thức (online/offline)
+      + Ghi chú lịch nghỉ, bù học
+
+Ưu tiên: P3
+
+------------------------------------------------------------
+MODULE 8: BANNER & NỘI DUNG TRANG CHỦ
+------------------------------------------------------------
+Mục đích: Quản lý các thành phần hiển thị trên website công khai
+
+Tính năng:
+  - Slider/Banner chính:
+      + Upload ảnh banner
+      + Tiêu đề và mô tả ngắn trên banner
+      + Link điều hướng khi click
+      + Thứ tự hiển thị (kéo thả sắp xếp)
+      + Bật/tắt từng banner
+  - Thống kê hiển thị (số liệu trang chủ):
+      + Số học viên đang học, số chương trình, số năm thành lập...
+      + Chỉnh sửa được từ admin
+  - Section trang chủ:
+      + Bật/tắt từng block nội dung trên trang chủ
+      + Sắp xếp thứ tự block
+  - Popup thông báo:
+      + Tạo popup thông báo khẩn (thông báo tuyển sinh, sự kiện...)
+      + Đặt ngày tự động ẩn popup
+
+Ưu tiên: P3
+
+------------------------------------------------------------
+MODULE 9: QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN
+------------------------------------------------------------
+(Xem chi tiết tại PHẦN 2 — PHÂN QUYỀN bên dưới)
+
+Tính năng:
+  - Danh sách tài khoản nội bộ (admin/editor/...)
+  - Tạo tài khoản mới, gán role
+  - Khóa / mở tài khoản
+  - Activity log: xem lịch sử thao tác của từng user
+  - Đổi mật khẩu
+
+Ưu tiên: P3 (setup ban đầu, ít thao tác)
+
+------------------------------------------------------------
+MODULE 10: CÀI ĐẶT HỆ THỐNG
+------------------------------------------------------------
+Tính năng:
+  - Thông tin liên hệ Viện (địa chỉ, SĐT, email, bản đồ)
+  - Link mạng xã hội (Facebook, Zalo, YouTube)
+  - SEO toàn cục (title mặc định, meta description, favicon)
+  - Cấu hình email SMTP (gửi thư tự động)
+  - Chế độ bảo trì website (bật/tắt maintenance mode)
+  - Thông tin copyright footer
+
+Ưu tiên: P3
+
+
+========================================
+PHẦN 2 — PHÂN QUYỀN (RBAC)
+========================================
+
+Nguyên tắc: Role-Based Access Control
+  → Ít role, quyền rõ ràng, dễ mở rộng
+  → Không check role trực tiếp trong UI — check permission
+  → Middleware tự động bảo vệ route
+
+------------------------------------------------------------
+5 ROLE TỔNG THỂ (bao gồm cả học viên)
+------------------------------------------------------------
+
+ROLE 1: SUPER_ADMIN — "Quản trị Hệ thống"
+  Dành cho: IT / Lãnh đạo Viện
+  Quyền: TẤT CẢ không giới hạn
+  Giao diện: Admin Panel (/admin/*)
+
+ROLE 2: ADMIN — "Quản trị viên"
+  Dành cho: Cán bộ quản lý Viện
+  Quyền: Mọi nội dung + quản lý user
+          KHÔNG được: phân quyền, cài đặt hệ thống
+  Giao diện: Admin Panel (/admin/*)
+
+ROLE 3: EDITOR — "Biên tập viên"
+  Dành cho: Nhân viên nội dung, truyền thông
+  Quyền: Thêm/Sửa nội dung (tin tức, văn bản, TKB, banner)
+          KHÔNG được: Xóa, Duyệt-publish, xem hồ sơ tuyển sinh
+  Giao diện: Admin Panel (/admin/*) — giới hạn menu
+
+ROLE 4: ADMISSION_OFFICER — "Cán bộ Tuyển sinh"
+  Dành cho: Nhân viên phòng tuyển sinh
+  Quyền: Xem + sửa trạng thái hồ sơ, export Excel
+          KHÔNG được: Chỉnh nội dung website, xóa hồ sơ
+  Giao diện: Admin Panel (/admin/*) — chỉ thấy module Tuyển sinh
+
+ROLE 5: STUDENT — "Học viên"
+  Dành cho: Học viên Sau Đại học (Thạc sĩ / Tiến sĩ)
+  Quyền: Chỉ xem thông tin cá nhân của mình
+  Giao diện: Portal Học viên (/portal/*) — KHÁC HOÀN TOÀN admin
+
+------------------------------------------------------------
+MA TRẬN PHÂN QUYỀN CHI TIẾT
+------------------------------------------------------------
+
+                           SUPER  ADMIN  EDITOR  ADMISSION  STUDENT
+--------------------------------------------------------------------
+DASHBOARD
+  Xem thống kê đầy đủ       V      V       -        -          -
+  Xem thống kê tuyển sinh   V      V       -        V          -
+  Xem activity log          V      V       -        -          -
+
+THÔNG BÁO & TIN TỨC
+  Xem danh sách             V      V       V        V          -
+  Tạo bài mới               V      V       V        V          -
+  Sửa bài                   V      V       V        V          -
+  Duyệt & Xuất bản          V      V       -        -          -
+  Xóa bài                   V      V       -        -          -
+  Ghim bài                  V      V       -        -          -
+
+CHƯƠNG TRÌNH ĐÀO TẠO
+  Xem                       V      V       V        V          V (portal)
+  Tạo / Sửa                 V      V       V        -          -
+  Xóa                       V      V       -        -          -
+
+TUYỂN SINH
+  Xem hồ sơ ứng viên        V      V       -        V          -
+  Sửa trạng thái hồ sơ      V      V       -        V          -
+  Export Excel              V      V       -        V          -
+  Xóa hồ sơ                 V      V       -        -          -
+  Tạo / đóng đợt tuyển      V      V       -        -          -
+
+VĂN BẢN — TÀI LIỆU
+  Xem / Tải xuống           V      V       V        V          V (portal)
+  Thêm / Sửa                V      V       V        -          -
+  Xóa                       V      V       -        -          -
+
+ĐÀO TẠO NGẮN HẠN
+  Xem                       V      V       V        -          V (portal)
+  Quản lý lớp               V      V       V        -          -
+
+THỜI KHÓA BIỂU
+  Xem                       V      V       V        -          V (portal)
+  Chỉnh sửa, upload         V      V       V        -          -
+
+BANNER & TRANG CHỦ
+  Xem / Chỉnh sửa           V      V       V        -          -
+
+UPLOAD MANAGER
+  Upload file               V      V       V        -          -
+  Xóa file đã upload        V      V       -        -          -
+  Xem thư viện file         V      V       V        -          -
+
+QUẢN LÝ NGƯỜI DÙNG
+  Xem danh sách user        V      V       -        -          -
+  Tạo tài khoản mới         V      V       -        -          -
+  Sửa thông tin user        V      V       -        -          -
+  Khóa tài khoản            V      V       -        -          -
+  Xóa tài khoản             V      -       -        -          -
+  Gán / Đổi role            V      -       -        -          -
+
+CÀI ĐẶT HỆ THỐNG
+  Thông tin liên hệ         V      -       -        -          -
+  SEO, SMTP, bảo trì        V      -       -        -          -
+
+PORTAL HỌC VIÊN (riêng)
+  Xem thông tin cá nhân     -      -       -        -          V
+  Xem TKB của mình          -      -       -        -          V
+  Xem điểm số               -      -       -        -          V
+  Xem học phí               -      -       -        -          V
+  Nộp đơn, hồ sơ            -      -       -        -          V
+  Nhận thông báo riêng      -      -       -        -          V
+
+------------------------------------------------------------
+DANH SÁCH PERMISSION (code)
+------------------------------------------------------------
+
+  news:read | news:create | news:edit | news:delete | news:publish
+  program:read | program:create | program:edit | program:delete
+  admission:read | admission:edit | admission:delete | admission:export
+  document:read | document:create | document:edit | document:delete
+  user:read | user:create | user:edit | user:delete
+  role:manage
+  settings:manage
+  upload:manage | upload:delete
+  log:read
+
+------------------------------------------------------------
+GIẢI THÍCH TẠI SAO 4 ROLE ADMIN LÀ ĐỦ
+------------------------------------------------------------
+
+  3 role → không tách được Admission Officer khỏi Editor
+            (2 người có nhu cầu hoàn toàn khác nhau)
+
+  4 role → Tối ưu: rõ ràng, nhân viên mới dễ hiểu mình được làm gì
+
+  5+ role → Phức tạp: IT dễ nhầm khi gán quyền,
+             overlap quyền, khó audit
+
+  + Role STUDENT tách biệt hoàn toàn — portal khác, không lẫn admin
+
+
+========================================
+PHẦN 3 — UPLOAD MODULE (Tách biệt)
+========================================
+
+Vấn đề cần giải quyết:
+  1. Tránh nhúng upload vào từng trang → trùng code, khó maintain
+  2. File upload phải hoạt động đúng cả khi build production (Next.js)
+  3. Dễ migrate sang cloud storage sau này
+
+------------------------------------------------------------
+CẤU TRÚC THƯ MỤC
+------------------------------------------------------------
+
+  /lib/upload/
+    ├─ uploadService.ts       → Core logic xử lý file (1 nơi duy nhất)
+    ├─ uploadConfig.ts        → Cấu hình: maxSize, loại file, thư mục
+    └─ uploadHelpers.ts       → Tạo tên unique, validate file, resize ảnh
+
+  /app/api/upload/
+    ├─ route.ts               → POST  /api/upload  (upload file)
+    ├─ delete/route.ts        → DELETE /api/upload/delete (xóa file)
+    └─ list/route.ts          → GET   /api/upload/list (lấy danh sách)
+
+  /components/upload/
+    ├─ UploadZone.tsx         → Component kéo thả + click chọn file
+    ├─ FilePreview.tsx        → Preview ảnh / icon PDF
+    ├─ FileManager.tsx        → Thư viện quản lý file đã upload
+    └─ UploadProgress.tsx     → Thanh tiến trình upload
+
+  /public/uploads/            → Thư mục lưu file (môi trường dev)
+    ├─ images/
+    ├─ documents/
+    ├─ banners/
+    └─ avatars/
+
+------------------------------------------------------------
+GIẢI QUYẾT VẤN ĐỀ PRODUCTION BUILD
+------------------------------------------------------------
+
+Vấn đề: /public/uploads có thể bị xóa khi rebuild Next.js
+
+Giải pháp theo từng cấp:
+
+  LEVEL 1 — VPS nhỏ, đơn giản:
+    → Lưu file vào /var/uploads/ (NGOÀI thư mục project)
+    → Dùng process.cwd() trong API route (không dùng __dirname)
+    → Nginx serve /uploads/* → /var/uploads/
+    → Khi rebuild app, file vẫn an toàn
+
+  LEVEL 2 — Trung bình (đề xuất):
+    → Dùng Cloudinary (free 25GB storage, CDN, resize ảnh tự động)
+    → Chỉ cần thay đổi uploadService.ts
+    → Không lo mất file khi build
+    → URL file ổn định, nhanh
+
+  LEVEL 3 — Enterprise:
+    → AWS S3 hoặc MinIO tự host
+    → CDN trước S3 cho tốc độ toàn cầu
+
+KEY CODE FIX (Next.js production):
+  Dùng: join(process.cwd(), 'public', 'uploads', category)
+  Không dùng: __dirname hoặc path tương đối
+
+------------------------------------------------------------
+PHÂN LOẠI FILE UPLOAD
+------------------------------------------------------------
+
+  Category "images"    → jpg, png, webp, gif  → max 5MB
+  Category "documents" → pdf, doc, docx       → max 10MB
+  Category "banners"   → jpg, png, webp        → max 5MB
+  Category "avatars"   → jpg, png, webp        → max 2MB
+
+------------------------------------------------------------
+CÁCH DÙNG COMPONENT TÁI SỬ DỤNG
+------------------------------------------------------------
+
+  // Trong trang Tin tức:
+  <UploadZone category="images" accept="image/*" maxFiles={5} />
+
+  // Trong trang Văn bản:
+  <UploadZone category="documents" accept=".pdf,.doc,.docx" maxFiles={1} />
+
+  // Trong trang Banner:
+  <UploadZone category="banners" accept="image/*" aspectRatio="16:5" />
+
+  // Thư viện quản lý:
+  <FileManager category="images" onSelect={(url) => setImage(url)} />
+
+
+========================================
+PHẦN 4 — PORTAL HỌC VIÊN
+========================================
+
+Khác hoàn toàn Admin Panel — giao diện thân thiện, mobile-first
+
+Tính năng cần có:
+
+  1. Đăng nhập:
+      + Đăng nhập bằng mã học viên + mật khẩu
+      + Tích hợp UIS (hệ thống quản lý sinh viên của UFM nếu có)
+      + Đặt lại mật khẩu qua email
+
+  2. Thông tin cá nhân:
+      + Họ tên, mã học viên, ảnh thẻ
+      + Chuyên ngành, khóa học, lớp, GVCN
+      + Trạng thái học: đang học / bảo lưu / tốt nghiệp
+
+  3. Thời khóa biểu:
+      + TKB theo tuần của học kỳ hiện tại
+      + Lịch thi
+      + Thông báo lịch bù / nghỉ
+
+  4. Kết quả học tập:
+      + Điểm từng môn theo học kỳ
+      + GPA tích lũy
+      + Tiến độ hoàn thành chương trình (môn đã qua / còn lại)
+
+  5. Học phí:
+      + Số tiền phải đóng theo học kỳ
+      + Lịch sử đóng học phí
+      + Trạng thái: đã đóng / chưa đóng / nợ
+
+  6. Nộp đơn / Hồ sơ:
+      + Đơn xin bảo lưu
+      + Đơn xin gia hạn luận văn
+      + Đơn xin miễn giảm học phí
+      + Upload hồ sơ đính kèm
+      + Trạng thái xử lý đơn
+
+  7. Thông báo:
+      + Thông báo chung từ Viện
+      + Thông báo riêng gửi đến học viên
+      + Đánh dấu đã đọc
+
+  8. Tài liệu:
+      + Tải các biểu mẫu, quy chế
+      + Giáo trình / tài liệu môn học (nếu giảng viên upload)
+
+
+========================================
+PHẦN 5 — THIẾT KẾ UI/UX ADMIN PANEL
+========================================
+
+------------------------------------------------------------
+LAYOUT TỔNG THỂ
+------------------------------------------------------------
+
+  +------------------+-------------------------------------+
+  | SIDEBAR (240px)  |  HEADER (breadcrumb + user menu)   |
+  |                  +-------------------------------------+
+  |  Logo            |                                     |
+  |  [Avatar + Role] |         CONTENT AREA                |
+  |                  |         (scrollable)                |
+  |  Nav Menu        |                                     |
+  |  (với icon)      |                                     |
+  |                  |                                     |
+  |  [Đăng xuất]     |                                     |
+  +------------------+-------------------------------------+
+
+------------------------------------------------------------
+SIDEBAR NAVIGATION
+------------------------------------------------------------
+
+  🏠  Dashboard
+  ─────────────────
+  📰  Thông báo & Tin tức
+  🎓  Chương trình Đào tạo
+      ├─ Thạc sĩ
+      └─ Tiến sĩ
+  📝  Tuyển sinh
+      ├─ Đợt tuyển sinh
+      └─ Hồ sơ ứng viên
+  📚  Đào tạo ngắn hạn
+  📁  Văn bản - Tài liệu
+  🗓️  Thời khóa biểu
+  ─────────────────
+  🖼️  Nội dung trang chủ
+  📤  Upload Manager
+  ─────────────────
+  👥  Người dùng & Quyền       [chỉ SUPER_ADMIN, ADMIN]
+  ⚙️  Cài đặt hệ thống          [chỉ SUPER_ADMIN]
+
+  Menu tự ẩn các mục user không có quyền truy cập
+
+------------------------------------------------------------
+DESIGN SYSTEM
+------------------------------------------------------------
+
+  Màu sắc:
+    Primary:    #1E3A5F  (Navy Blue — học thuật, uy tín)
+    Accent:     #F5A623  (Vàng cam — điểm nhấn, CTA)
+    Success:    #10B981  (Xanh lá)
+    Warning:    #F59E0B  (Vàng)
+    Danger:     #EF4444  (Đỏ)
+    Background: #F8FAFC  (Xám rất nhạt)
+    Surface:    #FFFFFF  (Trắng — card, modal)
+    Text:       #1E293B  (Đen nhạt)
+    Muted:      #64748B  (Xám)
+
+  Typography:
+    Font: "Plus Jakarta Sans" (Google Fonts)
+    Heading: 700 weight
+    Body: 400 weight
+    Caption/Label: 500 weight
+
+  Component Style:
+    Border radius: 12px (card), 8px (button), 6px (input)
+    Shadow: 0 1px 3px rgba(0,0,0,0.08)
+    Padding: 24px (card), 16px (section)
+    Hover: scale(1.02) hoặc shadow tăng nhẹ
+
+------------------------------------------------------------
+TABLE DESIGN (dùng cho mọi danh sách)
+------------------------------------------------------------
+
+  - Sticky header khi scroll
+  - Striped rows (xen kẽ màu)
+  - Checkbox chọn nhiều dòng
+  - Action buttons per row (Xem / Sửa / Xóa)
+  - Bulk action (xóa nhiều, xuất nhiều)
+  - Responsive: trên mobile collapse thành card
+
+------------------------------------------------------------
+FORM DESIGN
+------------------------------------------------------------
+
+  - Label trên input (không dùng placeholder làm label)
+  - Validation inline (hiện lỗi ngay dưới field)
+  - Required field đánh dấu *
+  - Auto-save draft khi viết bài dài
+  - Confirm dialog trước khi xóa
+
+------------------------------------------------------------
+NOTIFICATION / TOAST
+------------------------------------------------------------
+
+  - Thành công: "✅ Đã lưu thành công"
+  - Lỗi: "❌ Có lỗi xảy ra, vui lòng thử lại"
+  - Cảnh báo: "⚠️ Bài chưa được xuất bản"
+  - Vị trí: góc trên phải, tự biến mất sau 3 giây
+
+
+========================================
+PHẦN 6 — TECH STACK ĐỀ XUẤT
+========================================
+
+  FRAMEWORK:    Next.js 14 (App Router)
+  LANGUAGE:     TypeScript
+  STYLING:      Tailwind CSS + shadcn/ui (hoặc Ant Design)
+  AUTH:         NextAuth.js v5 (hoặc JWT + cookie httpOnly)
+  DATABASE:     PostgreSQL + Prisma ORM (hoặc MySQL)
+  UPLOAD:       Local /public/uploads → migrate Cloudinary
+  RICH TEXT:    Tiptap hoặc Quill.js
+  CHARTS:       Recharts hoặc Chart.js
+  EXPORT:       xlsx (để export Excel)
+  EMAIL:        Nodemailer + SMTP
+
+  Deploy:
+    - VPS (DigitalOcean / Hetzner) + Nginx + PM2
+    - Hoặc: Vercel (Next.js) + PlanetScale (MySQL)
+
+
+========================================
+PHẦN 7 — THỨ TỰ LÀM (FLOW ĐỀ XUẤT)
+========================================
+
+GIAI ĐOẠN 1 — NỀN TẢNG (Sprint 1-2)
+  [ ] Setup project Next.js + TypeScript + Tailwind
+  [ ] Cấu hình database (Prisma + PostgreSQL)
+  [ ] Hệ thống Auth (đăng nhập, JWT, phân quyền)
+  [ ] Layout admin (sidebar, header, responsive)
+  [ ] Upload Module (API + Component)
+
+GIAI ĐOẠN 2 — CORE CONTENT (Sprint 3-4)
+  [ ] Module Thông báo & Tin tức (full CRUD + rich text)
+  [ ] Module Tuyển sinh (đợt + hồ sơ + trạng thái)
+  [ ] Dashboard (thống kê + biểu đồ)
+
+GIAI ĐOẠN 3 — NỘI DUNG PHỤ TRỢ (Sprint 5-6)
+  [ ] Module Chương trình Đào tạo
+  [ ] Module Văn bản - Tài liệu
+  [ ] Module Đào tạo Ngắn hạn
+
+GIAI ĐOẠN 4 — HOÀN THIỆN (Sprint 7-8)
+  [ ] Module Thời khóa biểu
+  [ ] Banner & Nội dung trang chủ
+  [ ] Quản lý Người dùng & Phân quyền
+  [ ] Cài đặt hệ thống
+  [ ] Upload Manager (thư viện file)
+
+GIAI ĐOẠN 5 — PORTAL HỌC VIÊN (Sprint 9-12)
+  [ ] Đăng nhập học viên
+  [ ] Trang thông tin cá nhân
+  [ ] Xem TKB, điểm, học phí
+  [ ] Nộp đơn online
+  [ ] Thông báo cá nhân
+
+
+========================================
+TÓM TẮT SỐ LIỆU
+========================================
+
+  Tổng module admin:        10 module
+  Tổng role hệ thống:       5 role (4 admin + 1 học viên)
+  Tổng permission:          ~20 permission riêng biệt
+  Tổng giao diện riêng:     2 (Admin Panel + Student Portal)
+  Tổng URL nhóm:            3 (/admin, /portal, / public)
+
+================================================================================
+END OF DOCUMENT — PHAN_TICH_ADMIN_SDH.txt
+================================================================================

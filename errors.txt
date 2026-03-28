@@ -1,0 +1,7 @@
+app/api/admin/admissions/rounds/route.ts(10,36): error TS18048: 'session.user' is possibly 'undefined'.
+app/api/admin/admissions/rounds/route.ts(10,49): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/admin/admissions/rounds/route.ts(32,36): error TS18048: 'session.user' is possibly 'undefined'.
+app/api/admin/admissions/rounds/route.ts(32,49): error TS2339: Property 'role' does not exist on type 'User'.
+app/api/admin/admissions/rounds/route.ts(32,55): error TS2345: Argument of type '"admission:manage"' is not assignable to parameter of type 'Permission'.
+models/AdmissionRound.ts(96,3): error TS2349: This expression is not callable.
+  Type 'SaveOptions' has no call signatures.

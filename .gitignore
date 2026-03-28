@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# uploads — ignore actual files, keep folder structure via .gitkeep
+/public/uploads/**
+!/public/uploads/**/.gitkeep
+
+# temp scripts
+create_structure.ps1

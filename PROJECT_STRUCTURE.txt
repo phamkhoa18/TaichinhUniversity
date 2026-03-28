@@ -1,0 +1,186 @@
+PROJECT STRUCTURE — HỆ THỐNG QUẢN TRỊ SAU ĐẠI HỌC UFM
+=======================================================
+
+uxui-taichinh/
+│
+├── types/                          ← Toàn bộ TypeScript types
+│   ├── index.ts                    ← Barrel export
+│   ├── auth.ts                     ← Role, Permission, SessionUser
+│   ├── news.ts                     ← News, NewsStatus, NewsCategory
+│   ├── admission.ts                ← Applicant, AdmissionRound
+│   ├── program.ts                  ← AcademicProgram
+│   ├── document.ts                 ← Document, DocumentCategory
+│   └── upload.ts                   ← UploadedFile, UploadResponse
+│
+├── lib/                            ← Business logic & utilities (server-side)
+│   ├── upload/
+│   │   ├── uploadService.ts        ← Core upload/delete/list (process.cwd())
+│   │   ├── uploadConfig.ts         ← maxSize, allowedTypes theo category
+│   │   └── uploadHelpers.ts        ← generateFilename, validate, formatSize
+│   ├── auth/
+│   │   └── permissions.ts          ← ROLE_PERMISSIONS, hasPermission()
+│   ├── db/
+│   │   └── prisma.ts               ← Prisma client singleton
+│   ├── email/
+│   │   └── mailer.ts               ← Nodemailer + templates
+│   ├── utils/
+│   │   └── index.ts                ← cn(), slugify(), formatDate()...
+│   └── validations/
+│       └── index.ts                ← Zod schemas
+│
+├── hooks/                          ← Custom React hooks (client-side)
+│   ├── useUpload.ts                ← Hook upload với progress
+│   ├── usePermission.ts            ← Check quyền trong component
+│   └── useDebounce.ts              ← Debounce input
+│
+├── config/                         ← App-level config
+│   └── site.ts                     ← Site name, URL, meta defaults
+│
+├── store/                          ← Global state (Zustand)
+│   └── authStore.ts                ← Session user state
+│
+├── constants/                      ← Hằng số dùng nhiều nơi
+│   ├── adminNav.ts                 ← Menu sidebar admin + permission mapping
+│   └── roles.ts                    ← Role labels, colors
+│
+├── components/                     ← Shared UI Components (dùng khắp nơi)
+│   ├── ui/                         ← Primitive: Button, Input, Badge, Card...
+│   ├── upload/                     ← UploadZone, FilePreview, FileManager
+│   ├── layout/                     ← AdminLayout, AdminSidebar, AdminHeader
+│   ├── forms/                      ← RichTextEditor, SelectField...
+│   ├── charts/                     ← StatsCard, LineChart, PieChart
+│   └── modals/                     ← ConfirmDialog, AlertModal
+│
+├── prisma/                         ← Database schema
+│   ├── schema.prisma               ← Prisma models
+│   └── migrations/                 ← DB migrations
+│
+├── app/                            ← Next.js App Router
+│   │
+│   ├── (auth)/                     ← Route group: trang đăng nhập
+│   │   ├── dang-nhap/page.tsx
+│   │   └── quen-mat-khau/page.tsx
+│   │
+│   ├── (public)/                   ← Route group: website công khai
+│   │   ├── layout.tsx              ← Header + Footer public
+│   │   ├── tuyen-sinh/
+│   │   │   ├── thac-si/page.tsx
+│   │   │   └── tien-si/page.tsx
+│   │   ├── dao-tao/
+│   │   │   ├── chuong-trinh-thac-si/page.tsx
+│   │   │   └── chuong-trinh-tien-si/page.tsx
+│   │   ├── dao-tao-ngan-han/page.tsx
+│   │   ├── van-ban/page.tsx
+│   │   ├── thoi-khoa-bieu/page.tsx
+│   │   └── lien-he/page.tsx
+│   │
+│   ├── (admin)/                    ← Route group: Admin Panel
+│   │   ├── layout.tsx              ← AdminLayout (sidebar + header)
+│   │   └── admin/
+│   │       ├── dashboard/page.tsx
+│   │       ├── thong-bao/
+│   │       │   ├── page.tsx        ← Danh sách
+│   │       │   ├── tao-moi/page.tsx
+│   │       │   └── [id]/page.tsx   ← Chi tiết/Sửa
+│   │       ├── chuong-trinh/
+│   │       │   ├── thac-si/page.tsx
+│   │       │   └── tien-si/page.tsx
+│   │       ├── tuyen-sinh/
+│   │       │   ├── dot/page.tsx    ← Đợt tuyển sinh
+│   │       │   └── ho-so/
+│   │       │       ├── page.tsx    ← Danh sách hồ sơ
+│   │       │       └── [id]/page.tsx
+│   │       ├── van-ban/page.tsx
+│   │       ├── dao-tao-ngan-han/
+│   │       │   ├── page.tsx
+│   │       │   └── [id]/page.tsx
+│   │       ├── thoi-khoa-bieu/page.tsx
+│   │       ├── trang-chu-cms/page.tsx
+│   │       ├── upload-manager/page.tsx
+│   │       ├── nguoi-dung/
+│   │       │   ├── page.tsx
+│   │       │   └── [id]/page.tsx
+│   │       └── cai-dat/page.tsx
+│   │
+│   ├── (portal)/                   ← Route group: Student Portal
+│   │   ├── layout.tsx              ← Portal layout
+│   │   └── portal/
+│   │       ├── thong-tin-ca-nhan/page.tsx
+│   │       ├── thoi-khoa-bieu/page.tsx
+│   │       ├── ket-qua-hoc-tap/page.tsx
+│   │       ├── hoc-phi/page.tsx
+│   │       ├── nop-don/page.tsx
+│   │       ├── thong-bao/page.tsx
+│   │       └── tai-lieu/page.tsx
+│   │
+│   ├── api/                        ← API Routes (server-side)
+│   │   ├── auth/[...nextauth]/     ← NextAuth
+│   │   ├── upload/
+│   │   │   ├── route.ts            ← POST (upload file)
+│   │   │   ├── delete/route.ts     ← DELETE (xóa file)
+│   │   │   └── list/route.ts       ← GET (danh sách file)
+│   │   ├── admin/
+│   │   │   ├── dashboard/route.ts
+│   │   │   ├── thong-bao/
+│   │   │   │   ├── route.ts        ← GET (list), POST (create)
+│   │   │   │   └── [id]/route.ts   ← GET, PUT, DELETE
+│   │   │   ├── chuong-trinh/[id]/route.ts
+│   │   │   ├── tuyen-sinh/
+│   │   │   │   └── ho-so/[id]/route.ts
+│   │   │   ├── van-ban/[id]/route.ts
+│   │   │   ├── dao-tao-ngan-han/[id]/route.ts
+│   │   │   ├── nguoi-dung/[id]/route.ts
+│   │   │   └── cai-dat/route.ts
+│   │   ├── portal/
+│   │   │   ├── thong-tin/route.ts
+│   │   │   ├── thoi-khoa-bieu/route.ts
+│   │   │   ├── ket-qua/route.ts
+│   │   │   ├── hoc-phi/route.ts
+│   │   │   └── don/route.ts
+│   │   └── public/
+│   │       ├── tin-tuc/route.ts    ← API công khai (không cần auth)
+│   │       ├── chuong-trinh/route.ts
+│   │       └── van-ban/route.ts
+│   │
+│   ├── layout.tsx                  ← Root layout
+│   ├── globals.css                 ← Global styles
+│   └── page.tsx                    ← Trang chủ (public)
+│
+├── public/
+│   ├── uploads/                    ← File upload storage
+│   │   ├── images/.gitkeep
+│   │   ├── documents/.gitkeep
+│   │   ├── banners/.gitkeep
+│   │   └── avatars/.gitkeep
+│   ├── fonts/
+│   └── images/
+│
+├── .gitignore
+├── next.config.ts
+├── tsconfig.json
+├── package.json
+└── PHAN_TICH_ADMIN_SDH.txt
+
+=======================================================
+GHI CHÚ QUAN TRỌNG
+=======================================================
+
+1. Route Groups ( ) in Next.js:
+   - (public), (admin), (portal), (auth) là route groups
+   - Mỗi group có layout.tsx riêng
+   - URL thực: /admin/dashboard (không có "(admin)" trong URL)
+
+2. Upload:
+   - Mọi upload đều qua /api/upload
+   - File lưu vào /public/uploads/<category>/
+   - Dùng process.cwd() để đúng đường dẫn khi build
+
+3. Auth:
+   - Admin routes bảo vệ bằng middleware.ts (chưa tạo)
+   - Permission check bằng hasPermission() từ lib/auth/permissions.ts
+
+4. Thứ tự code tiếp theo:
+   Bước 1: prisma/schema.prisma
+   Bước 2: app/(admin)/layout.tsx + components/layout/AdminSidebar
+   Bước 3: app/(admin)/admin/dashboard/page.tsx
+   Bước 4: Từng module theo ưu tiên P1 → P2 → P3
