@@ -70,6 +70,12 @@ export const ADMIN_NAV: NavItem[] = [
     permission: 'program:read',
   },
   {
+    label: 'Quản lý Menu',
+    href: '/admin/menu',
+    icon: 'PanelTop',
+    permission: 'settings:manage',
+  },
+  {
     label: 'Nội dung trang chủ',
     href: '/admin/trang-chu-cms',
     icon: 'Layout',

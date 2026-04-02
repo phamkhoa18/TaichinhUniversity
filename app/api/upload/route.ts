@@ -6,9 +6,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { UploadCategory } from '@/types/upload'
 import { uploadFile } from '@/lib/upload/uploadService'
+import { auth } from '@/auth'
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'Chưa đăng nhập' }, { status: 401 })
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const category = (formData.get('category') as UploadCategory) || 'images'
@@ -17,11 +23,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Không tìm thấy file' }, { status: 400 })
     }
 
-    // TODO: Xác thực session user ở đây
-    // const session = await getServerSession()
-    // if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const result = await uploadFile(file, category)
+    const userId = (session.user as any).id
+    const result = await uploadFile(file, category, userId)
 
     return NextResponse.json({
       success: true,

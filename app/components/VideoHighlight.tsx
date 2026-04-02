@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export default function VideoHighlight() {
+export default function VideoHighlight({ videoId = 'ZQ_v4hFe_3w' }: { videoId?: string }) {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -28,12 +28,12 @@ export default function VideoHighlight() {
 
     const initPlayer = () => {
       playerRef.current = new window.YT.Player('ufm-yt-player', {
-        videoId: 'ZQ_v4hFe_3w',
+        videoId: videoId,
         playerVars: {
           autoplay: 1,
           mute: 1,
           loop: 1,
-          playlist: 'ZQ_v4hFe_3w',
+          playlist: videoId,
           controls: 0,
           showinfo: 0,
           rel: 0,

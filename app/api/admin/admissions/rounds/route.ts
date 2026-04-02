@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import connectToDatabase from '@/lib/db/mongodb'
 import AdmissionRound from '@/models/AdmissionRound'
 import { auth } from '@/auth'
+import '@/models/Applicant'
 import { hasPermission } from '@/lib/auth/permissions'
 import { SessionUser } from '@/types/auth'
 

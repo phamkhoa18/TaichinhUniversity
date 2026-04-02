@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectToDatabase from '@/lib/db/mongodb'
 import AiDocument from '@/models/AiDocument'
 import { auth } from '@/auth'
+import '@/models/User'
 
 // Set FastAPI backend URL, fallback to localhost
 const FASTAPI_URL = process.env.FASTAPI_URL || 'http://127.0.0.1:8000'

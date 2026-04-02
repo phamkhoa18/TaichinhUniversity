@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
@@ -19,6 +20,15 @@ import CtaSection from '@/app/components/CtaSection';
 import VideoHighlight from '@/app/components/VideoHighlight';
 import ConsultationSection from '@/app/components/ConsultationSection';
 import Chatbot from '@/app/components/Chatbot';
+import GlobalPopup from '@/app/components/GlobalPopup';
+import { useSiteSettings } from '@/store/SiteSettingsProvider';
+
+// Swiper
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 /* ─── Framer Motion ─── */
 const fadeUp = {
@@ -63,64 +73,6 @@ const aboutStats = [
   { value: '150+', desc: 'đối tác doanh nghiệp và tổ chức quốc tế' },
 ];
 
-/* ─── News Items (UFM Post-Graduate) ─── */
-const featuredNews = {
-  slug: 'tuyen-sinh-thac-si-dot-1-2026',
-  tag: 'TUYỂN SINH SĐH',
-  title: 'Thông báo tuyển sinh trình độ Thạc sĩ đợt 1 năm 2026 – Viện Đào tạo Sau Đại học UFM',
-  image: '/images/hero-campus.png',
-};
-
-const sideNews = [
-  {
-    slug: 'tuyen-sinh-tien-si-2026',
-    tag: 'TUYỂN SINH TIẾN SĨ',
-    title: 'Thông báo về việc tuyển sinh trình độ Tiến sĩ đợt 1 năm 2026 – Chuyên ngành QTKD, TCNH, QLKT',
-    image: '/images/students-library.png',
-  },
-  {
-    slug: 'bao-ve-luan-an-tien-si-qtkd',
-    tag: 'NGHIÊN CỨU KHOA HỌC',
-    title: 'Hội đồng đánh giá Luận án Tiến sĩ cấp Viện – Chuyên ngành Quản trị Kinh doanh đợt 1/2026',
-    image: '/images/lecture-hall.png',
-  },
-  {
-    slug: 'hoi-thao-fintech-ai-2026',
-    tag: 'HỌC THUẬT',
-    title: 'Hội thảo khoa học quốc tế "Fintech, AI và Tài chính bền vững trong kỷ nguyên chuyển đổi số"',
-    image: '/images/hero-campus.png',
-  },
-  {
-    slug: 'uu-dai-hoc-phi-cuu-sv',
-    tag: 'CHÍNH SÁCH ƯU ĐÃI',
-    title: 'Giảm 10% học phí cho cựu sinh viên UFM – Cam kết ổn định học phí toàn khóa Thạc sĩ',
-    image: '/images/students-library.png',
-  },
-];
-
-const eventCards = [
-  {
-    slug: 'hop-tac-deloitte-2026',
-    image: '/images/hero-campus.png',
-    tag: 'Hội thảo Quốc tế',
-    date: '16-05-26',
-    title: 'Business Strategy & Sustainable Innovation – Nhịp cầu tri thức với chuyên gia toàn cầu',
-  },
-  {
-    slug: 'bao-ve-luan-an-tien-si-qtkd',
-    image: '/images/students-library.png',
-    tag: 'Bảo vệ Luận án',
-    date: '10-05-26',
-    title: 'Hội đồng đánh giá Luận án Tiến sĩ cấp Viện đợt 1/2026 – Chuyên ngành Tài chính – Ngân hàng',
-  },
-  {
-    slug: 'discovery-day-2026',
-    image: '/images/lecture-hall.png',
-    tag: 'Discovery Day',
-    date: '04-05-26',
-    title: 'Discovery Day 2026 – Trải nghiệm không gian học tập và giao lưu cùng Giảng viên, Cựu học viên',
-  },
-];
 
 /* ─── Life at UFM photos ─── */
 const lifePhotos = [
@@ -146,6 +98,65 @@ export default function HomePage() {
   const [current, setCurrent] = useState(0);
   const [achSlide, setAchSlide] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const { settings } = useSiteSettings();
+  const [config, setConfig] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/public/home')
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          setConfig(res.data);
+        }
+      })
+      .catch(err => console.error("Error loading home page config", err));
+  }, []);
+
+  const activeHeroSlides = config?.heroSlides?.length > 0 ? config.heroSlides : heroSlides;
+  const activeStats = config?.aboutStats?.length > 0 ? config.aboutStats : aboutStats;
+  const activeAboutNews = config?.featuredNewsIds?.length > 0 ? 
+    config.featuredNewsIds.filter(Boolean).map((n: any) => ({
+      slug: n.slug,
+      title: n.title,
+      image: n.thumbnail || '/images/default.jpg'
+    })) 
+  : (config?.achievements?.length > 0 ? config.achievements : achievements);
+
+  const activeFeaturedNews = (config?.latestNews && config.latestNews[0]) ? {
+    slug: config.latestNews[0].slug,
+    tag: config.latestNews[0].category?.name || 'TIN TỨC',
+    title: config.latestNews[0].title,
+    image: config.latestNews[0].thumbnail || '/images/default.jpg'
+  } : null;
+  const activeSideNews = (config?.latestNews && config.latestNews.length > 1) ? 
+    config.latestNews.slice(1, 5).map((n: any) => ({
+      slug: n.slug,
+      tag: n.category?.name || 'TIN TỨC',
+      title: n.title,
+      image: n.thumbnail || '/images/default.jpg'
+    })) 
+  : [];
+
+  const activeEventCards = (config?.latestNews && config.latestNews.length > 5) ?
+    config.latestNews.slice(5, 8).map((n: any) => ({
+      slug: n.slug,
+      tag: n.category?.name || 'SỰ KIỆN',
+      date: n.publishedAt ? new Date(n.publishedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, ' - ') : '',
+      title: n.title,
+      image: n.thumbnail || '/images/default.jpg'
+    }))
+  : [];
+
+  const activeVideo = config?.videoHighlight || {
+    title: 'Nâng tầm tư duy, kiến tạo tương lai đột phá',
+    desc: 'Viện Đào tạo Sau Đại học UFM không chỉ trang bị nền tảng kiến thức chuyên sâu cấp quản lý, mà còn khơi dậy tư duy nghiên cứu độc lập, giúp học viên nhạy bén với ý tưởng mới, làm chủ sự thay đổi và tạo bệ phóng vững chắc cho những đột phá chiến lược trong sự nghiệp.',
+    linkText: 'Tìm hiểu thêm về chúng tôi',
+    linkUrl: '#',
+    videoId: 'ZQ_v4hFe_3w'
+  };
+
+  // Chatbot hiển thị dựa trên settings (mặc định: hiện)
+  const showChatbot = settings?.appearance?.showChatbot !== false;
 
   const next = useCallback(() => {
     setCurrent((prev) => (prev + 1) % heroSlides.length);
@@ -163,11 +174,17 @@ export default function HomePage() {
       {/* ══════════════════════  HERO – Image Only Slideshow  ══════════════════════ */}
       <section className="hero-banner">
         <div className="hero-slider">
-          {heroSlides.map((slide, idx) => (
+          {activeHeroSlides.map((slide: any, idx: number) => (
             <div key={idx} className={`hero-slide ${idx === current ? 'active' : ''}`}>
-              <Image src={slide.image} alt="" fill sizes="100vw" className="hero-slide-img hero-desktop-img" priority={idx === 0} />
+              <Image src={slide.image || '/images/hero-banner/1.png'} alt="" fill sizes="100vw" className="hero-slide-img hero-desktop-img" priority={idx === 0} />
               {slide.mobileImage && (
                 <Image src={slide.mobileImage} alt="" width={1120} height={970} className="hero-slide-img hero-mobile-img" style={{ width: '100%', height: 'auto', objectFit: 'unset', transform: 'none' }} priority={idx === 0} />
+              )}
+              {slide.title && (
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-6 text-white text-shadow-md">
+                  <h1 className="text-4xl md:text-6xl font-bold whitespace-pre-line tracking-tight mb-4 max-w-4xl">{slide.title}</h1>
+                  {slide.subtitle && <p className="text-lg md:text-2xl font-medium max-w-2xl text-shadow">{slide.subtitle}</p>}
+                </div>
               )}
             </div>
           ))}
@@ -176,14 +193,14 @@ export default function HomePage() {
         {/* Prev / Next */}
         <button
           className="hero-arrow hero-arrow-prev"
-          onClick={() => setCurrent((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
+          onClick={() => setCurrent((prev) => (prev - 1 + activeHeroSlides.length) % activeHeroSlides.length)}
           aria-label="Previous"
         >
           <ChevronLeft size={28} />
         </button>
         <button
           className="hero-arrow hero-arrow-next"
-          onClick={() => setCurrent((prev) => (prev + 1) % heroSlides.length)}
+          onClick={() => setCurrent((prev) => (prev + 1) % activeHeroSlides.length)}
           aria-label="Next"
         >
           <ChevronRight size={28} />
@@ -191,7 +208,7 @@ export default function HomePage() {
 
         {/* Dots */}
         <div className="hero-dots">
-          {heroSlides.map((_, idx) => (
+          {activeHeroSlides.map((_: any, idx: number) => (
             <button
               key={idx}
               className={`hero-dot ${idx === current ? 'active' : ''}`}
@@ -288,7 +305,7 @@ export default function HomePage() {
       {/* ══════════════  UFM HIGHLIGHT (VLU STYLE CLONE)  ══════════════ */}
       <section className="ufm-highlight-section">
         <div className="ufm-highlight-wrapper vlu-news-container">
-          <VideoHighlight />
+          <VideoHighlight videoId={activeVideo.videoId} />
 
           <motion.div
             className="ufm-highlight-content"
@@ -296,14 +313,14 @@ export default function HomePage() {
             variants={fadeUp} custom={1}
           >
             <div className="ufm-highlight-header">
-              <h3 className="ufm-highlight-title">Nâng tầm tư duy, kiến tạo tương lai đột phá</h3>
+              <h3 className="ufm-highlight-title">{activeVideo.title}</h3>
             </div>
             <div className="ufm-highlight-body">
               <p className="ufm-highlight-desc">
-                Viện Đào tạo Sau Đại học UFM không chỉ trang bị nền tảng kiến thức chuyên sâu cấp quản lý, mà còn khơi dậy tư duy nghiên cứu độc lập, giúp học viên nhạy bén với ý tưởng mới, làm chủ sự thay đổi và tạo bệ phóng vững chắc cho những đột phá chiến lược trong sự nghiệp.
+                {activeVideo.desc}
               </p>
-              <a href="#" className="ufm-highlight-link">
-                <span className="ufm-highlight-link-text">Tìm hiểu thêm về chúng tôi</span>
+              <a href={activeVideo.linkUrl || '#'} className="ufm-highlight-link">
+                <span className="ufm-highlight-link-text">{activeVideo.linkText}</span>
                 <span className="ufm-highlight-btn">
                   <ChevronRight size={20} strokeWidth={3} />
                 </span>
@@ -325,43 +342,37 @@ export default function HomePage() {
               <h2 className="about-ufm-title">Đôi nét về Viện SĐH</h2>
               <p className="about-ufm-subtitle">Những cột mốc đáng nhớ trên hành trình đào tạo nguồn nhân lực chất lượng cao của Viện Đào tạo Sau Đại học UFM.</p>
             </motion.div>
-            <motion.div
-              className="about-ufm-cards"
-              initial="hidden" whileInView="visible" viewport={{ once: true }}
-              variants={fadeUp} custom={1}
-            >
-              <div className="about-ufm-card">
-                <div className="about-ufm-card-img">
-                  <Image src="/images/hero-campus.png" alt="QS Sustainability 2026" fill sizes="400px" />
-                </div>
-                <div className="about-ufm-card-overlay"></div>
-                <div className="about-ufm-card-text">9 chương trình Thạc sĩ và 3 chương trình Tiến sĩ đạt chuẩn kiểm định chất lượng</div>
-              </div>
-              <div className="about-ufm-card">
-                <div className="about-ufm-card-img">
-                  <Image src="/images/lecture-hall.png" alt="QS Asia Ranking 2026" fill sizes="400px" />
-                </div>
-                <div className="about-ufm-card-overlay"></div>
-                <div className="about-ufm-card-text">Đội ngũ giảng viên 100% trình độ Tiến sĩ, Phó Giáo sư, Giáo sư</div>
-              </div>
-              <div className="about-ufm-card">
-                <div className="about-ufm-card-img">
-                  <Image src="/images/students-library.png" alt="Microsoft Showcase School 2025" fill sizes="400px" />
-                </div>
-                <div className="about-ufm-card-overlay"></div>
-                <div className="about-ufm-card-text">Hệ thống số hóa toàn diện – Đào tạo kết hợp trực tiếp và trực tuyến</div>
-              </div>
-            </motion.div>
-            <motion.div
-              className="about-ufm-dots"
-              initial="hidden" whileInView="visible" viewport={{ once: true }}
-              variants={fadeUp} custom={2}
-            >
-              <div className="pg-dot active"></div>
-              {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                <div key={i} className="pg-dot"><ChevronRight size={14} strokeWidth={4} /></div>
-              ))}
-            </motion.div>
+            <div className="about-ufm-swiper-wrap" style={{ position: 'relative' }}>
+              <Swiper
+                modules={[Navigation, Pagination, Autoplay]}
+                spaceBetween={24}
+                slidesPerView={1}
+                navigation
+                pagination={{ clickable: true }}
+                autoplay={{ delay: 4000, disableOnInteraction: false }}
+                loop={activeAboutNews.length > 3}
+                breakpoints={{
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                }}
+                className="about-ufm-swiper"
+              >
+                {activeAboutNews.map((ach: any, idx: number) => {
+                  const CardWrapper = ach.slug ? Link : 'div';
+                  return (
+                    <SwiperSlide key={idx}>
+                      <CardWrapper href={ach.slug ? `/news/${ach.slug}` : '#'} className="about-ufm-card" style={{ display: 'block' }}>
+                        <div className="about-ufm-card-img">
+                          <Image src={ach.image || '/images/default.jpg'} alt={ach.title} fill sizes="400px" style={{ objectFit: 'cover' }} />
+                        </div>
+                        <div className="about-ufm-card-overlay"></div>
+                        <div className="about-ufm-card-text lg:text-lg">{ach.title}</div>
+                      </CardWrapper>
+                    </SwiperSlide>
+                  )
+                })}
+              </Swiper>
+            </div>
           </div>
         </div>
         <div className="about-ufm-bottom">
@@ -384,18 +395,12 @@ export default function HomePage() {
                 </a>
               </div>
               <div className="about-bottom-right">
-                <div className="about-ufm-stat-item">
-                  <div className="about-ufm-stat-value">5.000+</div>
-                  <div className="about-ufm-stat-desc">học viên cao học và nghiên cứu sinh</div>
-                </div>
-                <div className="about-ufm-stat-item">
-                  <div className="about-ufm-stat-value">12</div>
-                  <div className="about-ufm-stat-desc">chương trình Thạc sĩ và Tiến sĩ</div>
-                </div>
-                <div className="about-ufm-stat-item" style={{ maxWidth: '300px' }}>
-                  <div className="about-ufm-stat-value">92%</div>
-                  <div className="about-ufm-stat-desc">học viên thăng tiến sau 1 năm tốt nghiệp</div>
-                </div>
+                {activeStats.map((stat: any, idx: number) => (
+                  <div key={idx} className="about-ufm-stat-item px-2" style={{ maxWidth: '300px' }}>
+                    <div className="about-ufm-stat-value">{stat.value}</div>
+                    <div className="about-ufm-stat-desc">{stat.desc}</div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           </div>
@@ -424,26 +429,27 @@ export default function HomePage() {
           </motion.div>
 
           {/* Top news grid: featured + side */}
+          {activeFeaturedNews && (
           <motion.div
             className="vlu-news-top"
             initial="hidden" whileInView="visible" viewport={{ once: true }}
             variants={fadeUp} custom={1}
           >
             {/* Featured Left */}
-            <a href={`/news/${featuredNews.slug}`} className="vlu-featured-news">
+            <Link href={`/news/${activeFeaturedNews.slug}`} className="vlu-featured-news">
               <div className="vlu-featured-img">
-                <Image src={featuredNews.image} alt={featuredNews.title} fill sizes="600px" style={{ objectFit: 'cover' }} />
+                <Image src={activeFeaturedNews.image} alt={activeFeaturedNews.title} fill sizes="600px" style={{ objectFit: 'cover' }} />
               </div>
               <div className="vlu-featured-body">
-                <div className="vlu-featured-tag">{featuredNews.tag}</div>
-                <h3>{featuredNews.title}</h3>
+                <div className="vlu-featured-tag">{activeFeaturedNews.tag}</div>
+                <h3>{activeFeaturedNews.title}</h3>
               </div>
-            </a>
+            </Link>
 
             {/* Side Right List */}
             <div className="vlu-side-news">
-              {sideNews.map((item, idx) => (
-                <a key={idx} href={`/news/${item.slug}`} className="vlu-side-item">
+              {activeSideNews.map((item: any, idx: number) => (
+                <Link key={idx} href={`/news/${item.slug}`} className="vlu-side-item">
                   <div className="vlu-side-img">
                     <Image src={item.image} alt={item.title} fill sizes="200px" style={{ objectFit: 'cover' }} />
                   </div>
@@ -451,10 +457,11 @@ export default function HomePage() {
                     {item.tag && <span className="vlu-side-tag">{item.tag}</span>}
                     <h4>{item.title}</h4>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           </motion.div>
+          )}
 
           {/* Event Cards Grid */}
           <motion.div
@@ -462,19 +469,19 @@ export default function HomePage() {
             initial="hidden" whileInView="visible" viewport={{ once: true }}
             variants={fadeUp} custom={2}
           >
-            {eventCards.map((ev, idx) => (
-              <a key={idx} href={`/news/${ev.slug}`} className="vlu-event-card">
+            {activeEventCards.map((ev: any, idx: number) => (
+              <Link key={idx} href={`/news/${ev.slug}`} className="vlu-event-card">
                 <div className="vlu-event-img">
                   <Image src={ev.image} alt={ev.title} fill sizes="400px" style={{ objectFit: 'cover' }} />
                 </div>
                 <div className="vlu-event-body">
                   <div className="vlu-event-meta">
                     <span className="vlu-event-tag">{ev.tag}</span>
-                    <span className="vlu-event-date">{ev.date}</span>
+                    <span className="vlu-event-date"><CalendarDays size={13} /> {ev.date}</span>
                   </div>
                   <h4>{ev.title}</h4>
                 </div>
-              </a>
+              </Link>
             ))}
           </motion.div>
         </div>
@@ -601,7 +608,10 @@ export default function HomePage() {
       )}
 
       {/* ══════════════  CHATBOT UI  ══════════════ */}
-      <Chatbot />
+      {showChatbot && <Chatbot />}
+      
+      {/* ══════════════  GLOBAL POPUP  ══════════════ */}
+      <GlobalPopup />
     </>
   );
 }

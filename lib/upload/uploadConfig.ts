@@ -15,7 +15,7 @@ export const UPLOAD_CONFIG: Record<UploadCategory, {
     path: 'uploads/images',
   },
   documents: {
-    maxSizeMB: 10,
+    maxSizeMB: 50,
     allowedTypes: [
       'application/pdf',
       'application/msword',
@@ -34,7 +34,7 @@ export const UPLOAD_CONFIG: Record<UploadCategory, {
     path: 'uploads/avatars',
   },
   temp: {
-    maxSizeMB: 10,
+    maxSizeMB: 50,
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
     path: 'uploads/temp',
   },

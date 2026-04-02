@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectToDatabase from '@/lib/db/mongodb'
 import News from '@/models/News'
 import { auth } from '@/auth'
+import '@/models/User'
+import '@/models/Category'
 
 // GET: Lấy danh sách bài viết
 export async function GET() {

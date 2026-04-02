@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SiteSettingsProvider } from "@/store/SiteSettingsProvider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: {
@@ -40,7 +42,32 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body>{children}</body>
+      <body>
+        <SiteSettingsProvider>
+          {children}
+        </SiteSettingsProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              fontFamily: 'var(--font-sans, "Plus Jakarta Sans", sans-serif)',
+              fontSize: '13px',
+              fontWeight: 600,
+            },
+            classNames: {
+              success: 'border-emerald-200 bg-white text-slate-800',
+              error: 'border-rose-200 bg-white text-slate-800',
+              warning: 'border-amber-200 bg-white text-slate-800',
+              info: 'border-blue-200 bg-white text-slate-800',
+            },
+          }}
+          richColors
+          closeButton
+          expand={false}
+          duration={3000}
+        />
+      </body>
     </html>
   );
 }
+

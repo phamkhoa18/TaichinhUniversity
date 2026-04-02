@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import {
   Search, ChevronRight, CalendarDays, Clock,
-  ArrowRight, Tag, Filter, Grid3X3, List,
-  Newspaper, GraduationCap, BookOpen, Users,
-  Briefcase, Award
+  ArrowRight, Tag, Grid3X3, List, Newspaper
 } from 'lucide-react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
@@ -22,122 +23,85 @@ const fadeUp = {
   }),
 };
 
-/* ─── Categories ─── */
-const categories = [
-  { label: 'Tất cả', value: 'all', icon: <Newspaper size={15} /> },
-  { label: 'Tuyển sinh', value: 'tuyen-sinh', icon: <GraduationCap size={15} /> },
-  { label: 'Học thuật', value: 'hoc-thuat', icon: <BookOpen size={15} /> },
-  { label: 'Sự kiện', value: 'su-kien', icon: <Users size={15} /> },
-  { label: 'Hợp tác', value: 'hop-tac', icon: <Briefcase size={15} /> },
-  { label: 'Thành tựu', value: 'thanh-tuu', icon: <Award size={15} /> },
-];
+function NewsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-/* ─── Featured ─── */
-const featuredArticle = {
-  slug: 'tuyen-sinh-thac-si-dot-1-2026',
-  image: '/images/life/bg_ufm_4.jpg',
-  category: 'Tuyển sinh',
-  date: '15/03/2026',
-  readTime: '5 phút đọc',
-  title: 'Thông báo tuyển sinh trình độ Thạc sĩ đợt 1 năm 2026 – Viện Đào tạo Sau Đại học UFM',
-  excerpt: 'Viện Đào tạo Sau Đại học UFM chính thức mở đơn xét tuyển chương trình Thạc sĩ đợt 1/2026 với 9 ngành đào tạo. Ưu đãi giảm 10% học phí dành cho cựu sinh viên UFM.',
-};
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-/* ─── Articles ─── */
-const articles = [
-  {
-    slug: 'tuyen-sinh-tien-si-2026',
-    image: '/images/life/bg_ufm_5.jpg',
-    category: 'Tuyển sinh',
-    date: '12/03/2026',
-    readTime: '4 phút đọc',
-    title: 'Thông báo tuyển sinh trình độ Tiến sĩ đợt 1 năm 2026 – Chuyên ngành QTKD, TCNH, QLKT',
-    excerpt: 'Ba chuyên ngành Tiến sĩ mở đăng ký xét tuyển đợt đầu tiên trong năm 2026 với nhiều chính sách hỗ trợ nghiên cứu sinh.',
-  },
-  {
-    slug: 'hoi-thao-fintech-ai-2026',
-    image: '/images/life/bg_ufm_6.jpg',
-    category: 'Học thuật',
-    date: '08/03/2026',
-    readTime: '3 phút đọc',
-    title: 'Hội thảo khoa học quốc tế "Fintech, AI và Tài chính bền vững trong kỷ nguyên chuyển đổi số"',
-    excerpt: 'Sự kiện quy tụ hơn 200 nhà khoa học, chuyên gia trong và ngoài nước, chia sẻ nghiên cứu về ứng dụng AI trong tài chính.',
-  },
-  {
-    slug: 'bao-ve-luan-an-tien-si-qtkd',
-    image: '/images/life/bg_ufm_2.jpg',
-    category: 'Học thuật',
-    date: '05/03/2026',
-    readTime: '2 phút đọc',
-    title: 'Hội đồng đánh giá Luận án Tiến sĩ cấp Viện – Chuyên ngành Quản trị Kinh doanh đợt 1/2026',
-    excerpt: 'NCS Nguyễn Văn A đã bảo vệ thành công luận án với đề tài nghiên cứu về chiến lược quản trị trong bối cảnh hậu đại dịch.',
-  },
-  {
-    slug: 'uu-dai-hoc-phi-cuu-sv',
-    image: '/images/life/bg_ufm_3.jpg',
-    category: 'Tuyển sinh',
-    date: '01/03/2026',
-    readTime: '2 phút đọc',
-    title: 'Giảm 10% học phí cho cựu sinh viên UFM – Cam kết ổn định học phí toàn khóa Thạc sĩ',
-    excerpt: 'Chính sách ưu đãi đặc biệt dành cho cựu sinh viên UFM đăng ký chương trình Thạc sĩ, áp dụng từ đợt 1/2026.',
-  },
-  {
-    slug: 'discovery-day-2026',
-    image: '/images/life/bg_ufm.jpg',
-    category: 'Sự kiện',
-    date: '25/02/2026',
-    readTime: '3 phút đọc',
-    title: 'Discovery Day 2026 – Trải nghiệm không gian học tập và giao lưu cùng Giảng viên, Cựu học viên',
-    excerpt: 'Ngày hội mở cửa dành cho các ứng viên tiềm năng, trải nghiệm thực tế môi trường học tập tại Viện SĐH UFM.',
-  },
-  {
-    slug: 'hop-tac-deloitte-2026',
-    image: '/images/life/bg_ufm_4.jpg',
-    category: 'Hợp tác',
-    date: '20/02/2026',
-    readTime: '4 phút đọc',
-    title: 'UFM ký kết hợp tác chiến lược cùng Deloitte Vietnam – Nâng tầm nghiên cứu ứng dụng',
-    excerpt: 'Thỏa thuận hợp tác tạo cơ hội thực tập, nghiên cứu thực tiễn cho học viên cao học tại một trong Big4 kiểm toán.',
-  },
-  {
-    slug: 'xuat-sac-nghien-cuu-2025',
-    image: '/images/life/bg_ufm_5.jpg',
-    category: 'Thành tựu',
-    date: '15/02/2026',
-    readTime: '3 phút đọc',
-    title: 'Học viên Viện SĐH UFM đạt giải Xuất sắc tại Hội nghị Nghiên cứu Khoa học Trẻ toàn quốc',
-    excerpt: 'Công trình nghiên cứu về mô hình tài chính xanh được đánh giá cao bởi Hội đồng khoa học cấp quốc gia.',
-  },
-  {
-    slug: 'tot-nghiep-thac-si-k23',
-    image: '/images/life/bg_ufm_6.jpg',
-    category: 'Sự kiện',
-    date: '10/02/2026',
-    readTime: '2 phút đọc',
-    title: 'Lễ tốt nghiệp và trao bằng Thạc sĩ Khóa 23 – Hơn 350 tân Thạc sĩ nhận bằng',
-    excerpt: 'Buổi lễ trang trọng đánh dấu cột mốc quan trọng của hơn 350 học viên đã hoàn thành chương trình Thạc sĩ.',
-  },
-  {
-    slug: 'chuong-trinh-marketing-2026',
-    image: '/images/life/bg_ufm_2.jpg',
-    category: 'Tuyển sinh',
-    date: '05/02/2026',
-    readTime: '3 phút đọc',
-    title: 'Ra mắt chương trình Thạc sĩ Marketing – Chiến lược thương hiệu trong kỷ nguyên số',
-    excerpt: 'Chương trình mới nhất của Viện SĐH, đáp ứng nhu cầu nhân lực gấp về marketing số và phân tích dữ liệu.',
-  },
-];
+  // Sync state from query parameters
+  const activeCategory = searchParams.get('category') || 'all';
+  const searchTerm = searchParams.get('search') || '';
+  const viewMode = (searchParams.get('view') as 'grid' | 'list') || 'grid';
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
-export default function TinTucPage() {
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const ITEMS_PER_PAGE = 9;
+
+  // Helper to update URL params cleanly
+  const updateParams = useCallback((newParams: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(newParams).forEach(([k, v]) => {
+      if (v === null || v.trim() === '') params.delete(k);
+      else params.set(k, v);
+    });
+    
+    // Auto-reset to page 1 when category or search changes (unless page is explicitly updated)
+    if ((newParams.category !== undefined || newParams.search !== undefined) && newParams.page === undefined) {
+      params.delete('page'); // equivalent to page 1
+    }
+    
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [searchParams, pathname, router]);
+
+  // Handle Input with delay (debounce) locally before pushing to URL? 
+  // No, let's keep it simple. For text input, we will use local state and push on timeout or just push directly.
+  const [localSearch, setLocalSearch] = useState(searchTerm);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localSearch !== searchTerm) {
+        updateParams({ search: localSearch });
+      }
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [localSearch, searchTerm, updateParams]);
+
+
+  useEffect(() => {
+    fetch('/api/public/tin-tuc')
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) setArticles(json.data);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Extract unique categories from articles
+  const categories = [
+    { label: 'Tất cả', value: 'all', icon: <Newspaper size={15} /> }
+  ];
+  const uniqueCats = new Set<string>();
+  articles.forEach(a => {
+    if (a.category && a.category.name && !uniqueCats.has(a.category.name)) {
+      uniqueCats.add(a.category.name);
+      categories.push({ label: a.category.name, value: a.category.slug, icon: <Tag size={15} /> });
+    }
+  });
 
   const filteredArticles = articles.filter(article => {
-    const matchCat = activeCategory === 'all' || article.category === categories.find(c => c.value === activeCategory)?.label;
+    const matchCat = activeCategory === 'all' || article.category?.slug === activeCategory;
     const matchSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCat && matchSearch;
   });
+
+  const isFirstPage = currentPage === 1;
+  const isDefaultView = activeCategory === 'all' && searchTerm === '';
+  const featuredArticle = (!loading && filteredArticles.length > 0 && isFirstPage && isDefaultView) ? filteredArticles[0] : null;
+
+  const dataForPagination = featuredArticle ? filteredArticles.slice(1) : filteredArticles;
+  const totalPages = Math.ceil(dataForPagination.length / ITEMS_PER_PAGE);
+  const listArticles = dataForPagination.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <>
@@ -169,34 +133,36 @@ export default function TinTucPage() {
       </section>
 
       {/* ══════════ FEATURED ══════════ */}
-      <section className="news-featured-section">
-        <div className="vlu-news-container">
-          <motion.a
-            href={`/news/${featuredArticle.slug}`}
-            className="news-featured-card"
-            initial="hidden" whileInView="visible" viewport={{ once: true }}
-            variants={fadeUp} custom={0}
-          >
-            <div className="news-featured-img">
-              <Image src={featuredArticle.image} alt={featuredArticle.title} fill sizes="800px" style={{ objectFit: 'cover' }} />
-              <div className="news-featured-badge">
-                <Tag size={13} /> {featuredArticle.category}
+      {!loading && featuredArticle && (
+        <section className="news-featured-section">
+          <div className="vlu-news-container">
+            <motion.a
+              href={`/news/${featuredArticle.slug}`}
+              className="news-featured-card"
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={fadeUp} custom={0}
+            >
+              <div className="news-featured-img">
+                <Image src={featuredArticle.thumbnail || '/images/life/bg_ufm_4.jpg'} alt={featuredArticle.title} fill sizes="800px" style={{ objectFit: 'cover' }} />
+                <div className="news-featured-badge" style={{ backgroundColor: featuredArticle.category?.color || '#005496' }}>
+                  <Tag size={13} /> {featuredArticle.category?.name || 'Chung'}
+                </div>
               </div>
-            </div>
-            <div className="news-featured-body">
-              <div className="news-featured-meta">
-                <span><CalendarDays size={14} /> {featuredArticle.date}</span>
-                <span><Clock size={14} /> {featuredArticle.readTime}</span>
+              <div className="news-featured-body">
+                <div className="news-featured-meta">
+                  <span><CalendarDays size={14} /> {featuredArticle.publishedAt ? format(new Date(featuredArticle.publishedAt), 'dd/MM/yyyy') : ''}</span>
+                  <span className="flex items-center gap-1.5"><Clock size={14} /> {Math.ceil((featuredArticle.content?.split(' ').length || 0) / 200)} phút đọc</span>
+                </div>
+                <h2>{featuredArticle.title}</h2>
+                <p>{featuredArticle.excerpt || featuredArticle.seoDescription || 'Không có mô tả.'}</p>
+                <span className="news-featured-cta">
+                  Đọc tiếp <ArrowRight size={16} />
+                </span>
               </div>
-              <h2>{featuredArticle.title}</h2>
-              <p>{featuredArticle.excerpt}</p>
-              <span className="news-featured-cta">
-                Đọc tiếp <ArrowRight size={16} />
-              </span>
-            </div>
-          </motion.a>
-        </div>
-      </section>
+            </motion.a>
+          </div>
+        </section>
+      )}
 
       {/* ══════════ FILTER + LISTING ══════════ */}
       <section className="news-listing-section">
@@ -212,21 +178,21 @@ export default function TinTucPage() {
               <input
                 type="text"
                 placeholder="Tìm kiếm bài viết..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
               />
             </div>
             <div className="news-view-toggle">
               <button
                 className={viewMode === 'grid' ? 'active' : ''}
-                onClick={() => setViewMode('grid')}
+                onClick={() => updateParams({ view: null })}
                 aria-label="Grid view"
               >
                 <Grid3X3 size={18} />
               </button>
               <button
                 className={viewMode === 'list' ? 'active' : ''}
-                onClick={() => setViewMode('list')}
+                onClick={() => updateParams({ view: 'list' })}
                 aria-label="List view"
               >
                 <List size={18} />
@@ -244,7 +210,7 @@ export default function TinTucPage() {
               <button
                 key={cat.value}
                 className={`news-cat-btn ${activeCategory === cat.value ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat.value)}
+                onClick={() => updateParams({ category: cat.value === 'all' ? null : cat.value })}
               >
                 {cat.icon} {cat.label}
               </button>
@@ -253,7 +219,9 @@ export default function TinTucPage() {
 
           {/* Articles Grid */}
           <div className={`news-grid ${viewMode === 'list' ? 'news-grid-list' : ''}`}>
-            {filteredArticles.map((article, idx) => (
+            {loading ? (
+               <div className="col-span-full text-center py-20 text-slate-500">Đang tải tin tức...</div>
+            ) : listArticles.map((article, idx) => (
               <motion.a
                 key={article.slug}
                 href={`/news/${article.slug}`}
@@ -262,18 +230,18 @@ export default function TinTucPage() {
                 variants={fadeUp} custom={idx % 3}
               >
                 <div className="news-card-img">
-                  <Image src={article.image} alt={article.title} fill sizes="400px" style={{ objectFit: 'cover' }} />
-                  <div className="news-card-cat">
-                    <Tag size={11} /> {article.category}
+                  <Image src={article.thumbnail || '/images/life/bg_ufm_5.jpg'} alt={article.title} fill sizes="400px" style={{ objectFit: 'cover' }} />
+                  <div className="news-card-cat" style={{ backgroundColor: article.category?.color || '#005496' }}>
+                    <Tag size={11} /> {article.category?.name || 'Chung'}
                   </div>
                 </div>
                 <div className="news-card-body">
                   <div className="news-card-meta">
-                    <span><CalendarDays size={13} /> {article.date}</span>
-                    <span><Clock size={13} /> {article.readTime}</span>
+                    <span><CalendarDays size={13} /> {article.publishedAt ? format(new Date(article.publishedAt), 'dd/MM/yyyy') : ''}</span>
+                    <span className="flex items-center gap-1.5"><Clock size={13} /> {Math.ceil((article.content?.split(' ').length || 0) / 200)} phút đọc</span>
                   </div>
                   <h3>{article.title}</h3>
-                  <p>{article.excerpt}</p>
+                  <p>{article.excerpt || article.seoDescription || 'Không có mô tả.'}</p>
                   <span className="news-card-readmore">
                     Đọc tiếp <ChevronRight size={15} />
                   </span>
@@ -282,33 +250,75 @@ export default function TinTucPage() {
             ))}
           </div>
 
-          {filteredArticles.length === 0 && (
-            <div className="news-empty">
-              <Search size={48} />
-              <h3>Không tìm thấy bài viết</h3>
-              <p>Thử thay đổi từ khóa hoặc danh mục tìm kiếm</p>
+          {!loading && filteredArticles.length === 0 && (
+            <div className="news-empty text-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm mt-8">
+              <Newspaper size={48} className="mx-auto text-slate-300 mb-4" />
+              <h3 className="text-[18px] font-semibold text-slate-800 mb-1">Chưa có bài viết nào</h3>
+              <p className="text-[14px] text-slate-500">Không có tin tức nào phù hợp với bộ lọc hiện tại của bạn.</p>
             </div>
           )}
 
           {/* Pagination */}
-          <motion.div
-            className="news-pagination"
-            initial="hidden" whileInView="visible" viewport={{ once: true }}
-            variants={fadeUp} custom={0}
-          >
-            <button className="news-page-btn active">1</button>
-            <button className="news-page-btn">2</button>
-            <button className="news-page-btn">3</button>
-            <span className="news-page-dots">...</span>
-            <button className="news-page-btn">12</button>
-            <button className="news-page-btn news-page-next">
-              Tiếp <ChevronRight size={16} />
-            </button>
-          </motion.div>
+          {!loading && totalPages > 1 && (
+            <motion.div
+              className="news-pagination"
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={fadeUp} custom={0}
+            >
+              {[...Array(totalPages)].map((_, i) => {
+                const pageNumber = i + 1;
+                // Simple pagination truncation (shows first, last, current, and adjacent)
+                if (
+                  pageNumber === 1 || 
+                  pageNumber === totalPages || 
+                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                ) {
+                  return (
+                    <button 
+                      key={pageNumber}
+                      className={`news-page-btn ${currentPage === pageNumber ? 'active' : ''}`}
+                      onClick={() => {
+                        updateParams({ page: pageNumber > 1 ? pageNumber.toString() : null });
+                        window.scrollTo({ top: 500, behavior: 'smooth' });
+                      }}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                } else if (
+                  pageNumber === currentPage - 2 || 
+                  pageNumber === currentPage + 2
+                ) {
+                  return <span key={pageNumber} className="news-page-dots">...</span>;
+                }
+                return null;
+              })}
+
+              {currentPage < totalPages && (
+                <button 
+                  className="news-page-btn news-page-next"
+                  onClick={() => {
+                    updateParams({ page: (currentPage + 1).toString() });
+                    window.scrollTo({ top: 500, behavior: 'smooth' });
+                  }}
+                >
+                  Tiếp <ChevronRight size={16} />
+                </button>
+              )}
+            </motion.div>
+          )}
         </div>
       </section>
 
       <Footer />
     </>
+  );
+}
+
+export default function TinTucPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-t-[#005496] border-slate-200 rounded-full animate-spin"></div></div>}>
+      <NewsContent />
+    </Suspense>
   );
 }

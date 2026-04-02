@@ -5,6 +5,7 @@ export interface ICategory extends Document {
   slug: string
   description?: string
   color: string
+  icon?: string
   order: number
   isActive: boolean
   createdAt: Date
@@ -32,6 +33,10 @@ const categorySchema = new Schema<ICategory>(
     color: {
       type: String,
       default: '#005496',
+    },
+    icon: {
+      type: String,
+      default: '',
     },
     order: {
       type: Number,

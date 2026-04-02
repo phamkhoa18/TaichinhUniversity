@@ -8,6 +8,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from '@/components/ui/table'
 import { Plus, Edit2, Trash2, Loader2, FolderOpen, Save, X } from 'lucide-react'
+import * as LucideIcons from 'lucide-react'
+import { IconPicker } from '@/components/icon-picker'
+import { showToast } from '@/lib/toast'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface CategoryItem {
   _id: string
@@ -15,6 +19,7 @@ interface CategoryItem {
   slug: string
   description?: string
   color: string
+  icon?: string
   order: number
   isActive: boolean
 }
@@ -34,8 +39,10 @@ export default function CategoryManagementPage() {
   const [editId, setEditId] = useState<string | null>(null)
 
   // Form state
-  const [form, setForm] = useState({ name: '', slug: '', description: '', color: '#005496' })
+  const [form, setForm] = useState({ name: '', slug: '', description: '', color: '#005496', icon: '' })
   const [error, setError] = useState('')
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchCategories = async () => {
     try {
@@ -48,7 +55,7 @@ export default function CategoryManagementPage() {
   useEffect(() => { fetchCategories() }, [])
 
   const resetForm = () => {
-    setForm({ name: '', slug: '', description: '', color: '#005496' })
+    setForm({ name: '', slug: '', description: '', color: '#005496', icon: '' })
     setEditId(null)
     setError('')
   }
@@ -78,24 +85,32 @@ export default function CategoryManagementPage() {
       const json = await res.json()
       if (!json.success) {
         setError(json.error || 'Có lỗi xảy ra')
+        showToast.error(json.error || 'Có lỗi xảy ra')
       } else {
+        showToast.success(editId ? 'Đã cập nhật danh mục' : 'Đã tạo danh mục mới')
         resetForm()
         fetchCategories()
       }
-    } catch { setError('Lỗi kết nối') } finally { setSaving(false) }
+    } catch { setError('Lỗi kết nối'); showToast.error('Lỗi kết nối') } finally { setSaving(false) }
   }
 
   const handleEdit = (cat: CategoryItem) => {
     setEditId(cat._id)
-    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', color: cat.color })
+    setForm({ name: cat.name, slug: cat.slug, description: cat.description || '', color: cat.color, icon: cat.icon || '' })
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Xóa danh mục này?')) return
+    setDeleting(true)
     try {
       await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' })
+      showToast.success('Đã xóa danh mục')
+      setDeleteId(null)
       fetchCategories()
-    } catch { }
+    } catch {
+      showToast.error('Lỗi kết nối')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -158,6 +173,13 @@ export default function CategoryManagementPage() {
               />
             </div>
           </div>
+          <div className="space-y-1.5">
+            <label className="text-[14px] font-semibold text-slate-700">Icon đại diện</label>
+            <IconPicker
+              value={form.icon}
+              onChange={(icon) => setForm(prev => ({ ...prev, icon }))}
+            />
+          </div>
         </div>
 
         {error && <p className="text-xs text-rose-500 font-medium mt-3">{error}</p>}
@@ -203,11 +225,26 @@ export default function CategoryManagementPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((cat) => (
+              {categories.map((cat) => {
+                const Icon = cat.icon ? (LucideIcons as any)[cat.icon] : null
+                return (
                 <TableRow key={cat._id} className="hover:bg-slate-50/60 group">
                   <TableCell className="py-3 px-5">
-                    <span className="text-[14px] font-semibold text-slate-800">{cat.name}</span>
-                    {cat.description && <p className="text-xs text-slate-500 mt-0.5">{cat.description}</p>}
+                    <div className="flex items-center gap-3">
+                      {Icon ? (
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 text-slate-400">
+                          <FolderOpen className="w-4 h-4" />
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-[14px] font-semibold text-slate-800">{cat.name}</span>
+                        {cat.description && <p className="text-xs text-slate-500 mt-0.5">{cat.description}</p>}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="py-3 px-5">
                     <code className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{cat.slug}</code>
@@ -223,17 +260,29 @@ export default function CategoryManagementPage() {
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded text-slate-400 hover:text-[#005496] hover:bg-blue-50" onClick={() => handleEdit(cat)}>
                         <Edit2 className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50" onClick={() => handleDelete(cat._id)}>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50" onClick={() => setDeleteId(cat._id)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+                )
+              })}
             </TableBody>
           </Table>
         )}
       </div>
+
+      {/* Confirm Delete */}
+      <ConfirmDialog
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={async () => { if (deleteId) await handleDelete(deleteId) }}
+        title="Xóa danh mục này?"
+        description="Danh mục sẽ bị xóa vĩnh viễn. Các bài viết thuộc danh mục này sẽ không còn phân loại."
+        variant="destructive"
+        loading={deleting}
+      />
     </div>
   )
 }

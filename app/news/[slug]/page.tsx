@@ -1,16 +1,17 @@
-'use client';
-
 import Image from 'next/image';
-import { ChevronRight, Calendar, User, Tag, Share2, Facebook, Linkedin, Clock, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
+import { ChevronRight, Calendar, User, Tag, Share2, Facebook, Linkedin, Clock, ArrowRight, FileText, Download, Maximize2 } from 'lucide-react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
+import connectToDatabase from '@/lib/db/mongodb';
+import News from '@/models/News';
+import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
+import ClientTableOfContents from '@/app/components/ClientTableOfContents';
+import PdfViewerClient from '@/app/components/PdfViewerClient';
+import ImageZoomWrapper from '@/app/components/ImageZoomWrapper';
 
-const recentNews = [
-  { category: 'HỢP TÁC DOANH NGHIỆP', title: 'Tọa đàm "Xu hướng chuyển đổi số trong lĩnh vực Tài chính - Ngân hàng 2026"', img: '/images/life/bg_ufm.jpg' },
-  { category: 'TUYỂN SINH', title: 'Trường Đại học Tài chính chính thức công bố đề án tuyển sinh Thạc sĩ, Tiến sĩ năm 2026', img: '/images/life/bg_ufm_2.jpg' },
-  { category: 'CHUYỂN ĐỔI SỐ', title: 'Hệ sinh thái số UFM triển khai mô hình AI Chatbot RAG hỗ trợ tư vấn học viên 24/7', img: '/images/life/bg_ufm_3.jpg' },
-  { category: 'HỌC THUẬT', title: 'Giao thoa giữa tối giản & hiện đại: Khai trương không gian nghiên cứu chuẩn quốc tế', img: '/images/life/bg_ufm_4.jpg' },
-];
+export const dynamic = 'force-dynamic';
 
 const recentEvents = [
   { title: 'Chương trình "Business Strategy & Sustainable Innovation"', date: '16 Th5, 2026', time: '08:00 - 17:00' },
@@ -18,7 +19,42 @@ const recentEvents = [
   { title: 'Discovery Day 2026 – Trải nghiệm không gian hệ sinh thái số', date: '04 Th5, 2026', time: '08:30 - 16:30' },
 ];
 
-export default function NewsDetailPage() {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  await connectToDatabase();
+  const news = await News.findOne({ slug, status: 'PUBLISHED' }).lean();
+  if (!news) return { title: 'Không tìm thấy bài viết' };
+
+  return {
+    title: news.title + ' | Viện Đào tạo Sau Đại học UFM',
+    description: news.seoDescription || news.excerpt || 'Tin tức Viện Đào Tạo Sau Đại Học UFM',
+    openGraph: {
+      title: news.title,
+      description: news.seoDescription || news.excerpt || '',
+      images: [news.thumbnail || '/images/life/bg_ufm_5.jpg'],
+    }
+  }
+}
+
+export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  await connectToDatabase();
+
+  const news: any = await News.findOne({ slug, status: 'PUBLISHED' })
+    .populate('category', 'name slug color')
+    .populate('author', 'name')
+    .lean();
+
+  if (!news) {
+    notFound();
+  }
+
+  const recentNews = await News.find({ slug: { $ne: slug }, status: 'PUBLISHED' })
+    .sort({ publishedAt: -1 })
+    .limit(4)
+    .populate('category', 'name slug color')
+    .lean();
+
   return (
     <>
       <Header />
@@ -28,19 +64,17 @@ export default function NewsDetailPage() {
         <section className="news-hero">
           <div className="news-hero-inner vlu-news-container">
             {/* Breadcrumb */}
-            <nav className="news-breadcrumb">
-              <a href="/">Trang chủ</a>
-              <ChevronRight size={14} />
-              <a href="/news">Tin tức & Sự kiện</a>
-              <ChevronRight size={14} />
-              <a href="#">Tin Tức</a>
-              <ChevronRight size={14} />
-              <span className="news-breadcrumb-current">Sinh viên Khoa Tài chính...</span>
+            <nav className="flex flex-wrap items-center gap-2 mb-7 text-[0.85rem] text-slate-500 min-w-0">
+              <a href="/" className="whitespace-nowrap hover:text-[#005496] transition-colors">Trang chủ</a>
+              <ChevronRight size={14} className="shrink-0" />
+              <a href="/news" className="whitespace-nowrap hover:text-[#005496] transition-colors">Tin tức & Sự kiện</a>
+              <ChevronRight size={14} className="shrink-0" />
+              <span className="truncate min-w-0 flex-1 text-[#005496] font-semibold">{news.title}</span>
             </nav>
 
             {/* Title */}
             <h1 className="news-hero-title">
-              Sinh viên Khoa Tài chính - Ngân hàng &ldquo;giải mã&rdquo; phân tích kỹ thuật cùng chuyên gia: Góc nhìn đầu tư trên thị trường chứng khoán - Vàng - Forex
+              {news.title}
             </h1>
 
             {/* Meta row */}
@@ -48,11 +82,11 @@ export default function NewsDetailPage() {
               <div className="news-hero-meta-left">
                 <span className="news-meta-item">
                   <User size={15} />
-                  <strong>TÁC GIẢ:</strong> Ban Truyền thông
+                  <strong>TÁC GIẢ:</strong> {news.author?.name || 'Ban Truyền thông'}
                 </span>
                 <span className="news-meta-item">
                   <Calendar size={15} />
-                  <strong>NGÀY:</strong> 12 Tháng 3, 2026
+                  <strong>NGÀY:</strong> {news.publishedAt ? format(new Date(news.publishedAt), 'dd/MM/yyyy') : ''}
                 </span>
               </div>
               <div className="news-share-row">
@@ -63,101 +97,116 @@ export default function NewsDetailPage() {
             </div>
 
             {/* Featured Image (full container width, big rounded corners) */}
-            <div className="news-hero-image">
-              <Image
-                src="/images/life/bg_ufm_5.jpg"
-                alt="Sinh viên tham gia chuyên đề phân tích kỹ thuật"
-                fill
-                sizes="(max-width: 1400px) 100vw, 1400px"
-                priority
-              />
-            </div>
+            {!news.hideThumbnail && news.thumbnail && (
+              <div className="news-hero-image">
+                <Image
+                  src={news.thumbnail}
+                  alt={news.title}
+                  fill
+                  sizes="(max-width: 1400px) 100vw, 1400px"
+                  priority
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+            )}
           </div>
         </section>
 
         {/* ══════ CONTENT SECTION (2 columns) ══════ */}
         <section className="news-content">
           <div className="news-content-inner vlu-news-container">
-            <div className="news-grid">
+            {/* Sử dụng Tailwind Grid để tránh xung đột CSS giữa các file */}
+            <div className="grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-10 items-start">
 
-              {/* LEFT: Article body */}
-              <article className="news-article">
-                <p className="news-article-intro">
-                  Sáng ngày 12/3/2026, tại Trung tâm Mô phỏng Ngân hàng & Chứng khoán của Khoa Tài chính - Ngân hàng, các sinh viên đang tham gia học phần Phân tích Đầu tư chứng khoán đã được chia sẻ chuyên đề với sự tham gia của khách mời là ThS. Bùi Việt Cường – Giám đốc Phát triển Kinh doanh tại Public Bank Vietnam Securities Company Limited.
-                </p>
-
-                <p>
-                  Chương trình được tổ chức dành cho các sinh viên chuyên ngành Đầu tư tài chính của Khoa Tài chính – Ngân hàng nhằm giúp sinh viên tiếp cận những góc nhìn thực tiễn từ thị trường tài chính thông qua kinh nghiệm của chuyên gia trong ngành.
-                </p>
-
-                <figure className="news-article-figure">
-                  <div className="news-article-img-wrap">
-                    <Image src="/images/life/bg_ufm_6.jpg" alt="Chuyên gia chia sẻ tại hội thảo" fill sizes="(max-width: 900px) 100vw, 800px" />
+              {/* LEFT: Article body (thêm min-w-0 overflow-hidden để chống tràn Jodit) */}
+              <article className="news-article min-w-0 overflow-hidden w-full">
+                {/* Meta Description / Excerpt Summary */}
+                {(news.seoDescription || news.excerpt) && (
+                  <div className="mb-4 p-5 border-l-4 border-[#005496] bg-[#005496]/5 rounded-r-md text-slate-700 font-medium text-[16px] leading-relaxed" style={{ lineHeight: '1.8' }}>
+                    {news.seoDescription || news.excerpt}
                   </div>
-                  <figcaption>ThS. Bùi Việt Cường chia sẻ kinh nghiệm thực tế về phân tích kỹ thuật tại buổi chuyên đề</figcaption>
-                </figure>
+                )}
 
-                <p>Trong buổi chia sẻ, ThS. Bùi Việt Cường đã giới thiệu nhiều nội dung thiết thực như:</p>
+                {/* Mục Lục tự động */}
+                {news.tocEnabled && <ClientTableOfContents />}
 
-                <ul className="news-article-list">
-                  <li>Tổng quan về phân tích kỹ thuật trong đầu tư chứng khoán;</li>
-                  <li>Các công cụ và phương pháp nhận diện xu hướng thị trường;</li>
-                  <li>Kinh nghiệm thực tế trong xây dựng chiến lược đầu tư;</li>
-                  <li>Góc nhìn về cơ hội và rủi ro trên các thị trường tài chính như chứng khoán, vàng và Forex.</li>
-                </ul>
+                <ImageZoomWrapper>
+                  <div
+                    className="jodit-content-render max-w-none"
+                    dangerouslySetInnerHTML={{ __html: news.content }}
+                  />
+                </ImageZoomWrapper>
 
-                <p>
-                  Thông qua những ví dụ thực tế và các tình huống phân tích trên thị trường, sinh viên đã có cơ hội hiểu rõ hơn cách vận dụng kiến thức học thuật vào thực tiễn đầu tư, đồng thời tiếp cận tư duy phân tích thị trường một cách có hệ thống và kỷ luật.
-                </p>
+                {/* Tài liệu đính kèm */}
+                {news.attachedFile && news.attachedFile.url && (
+                  <div className="mt-10 space-y-5">
 
-                <figure className="news-article-figure">
-                  <div className="news-article-img-wrap">
-                    <Image src="/images/life/bg_ufm_2.jpg" alt="Sinh viên trao đổi với chuyên gia" fill sizes="(max-width: 900px) 100vw, 800px" />
+                    {/* Download Box (Nhỏ gọn, thiết kế tinh tế) */}
+                    <div className="group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 border bg-white rounded-md transition-all duration-300 gap-3">
+                      <div className="flex items-center gap-3.5 min-w-0 overflow-hidden">
+                        <div className="w-11 h-11 rounded-lg bg-rose-50 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                          <FileText size={22} className="text-rose-600" strokeWidth={2} />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="text-[14px] font-bold text-slate-800 truncate group-hover:text-[#005496] transition-colors leading-tight mb-0.5" title={news.attachedFile.name}>
+                            {news.attachedFile.name || 'Tài liệu đính kèm'}
+                          </h4>
+                          <span className="inline-block text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-md">
+                            {(news.attachedFile.name?.toLowerCase().endsWith('.pdf') || news.attachedFile.url?.toLowerCase().endsWith('.pdf')) ? 'Định dạng PDF' : 'Tệp đính kèm'}
+                          </span>
+                        </div>
+                      </div>
+                      <a
+                        href={news.attachedFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 w-full sm:w-auto px-4 py-2 bg-slate-50 border border-slate-200 hover:border-[#005496] hover:bg-[#005496] text-slate-700 hover:text-white text-[13px] font-bold rounded-lg transition-all flex items-center justify-center gap-2"
+                      >
+                        <Download size={15} strokeWidth={2.5} /> Nhấn để tải về
+                      </a>
+                    </div>
+
+                    {/* Embedded Viewer (If PDF & Not Hidden) */}
+                    {!news.hidePdfPreview && (news.attachedFile.name?.toLowerCase().endsWith('.pdf') || news.attachedFile.url?.toLowerCase().endsWith('.pdf')) && (
+                      <div className="w-full flex flex-col mt-4">
+                        <PdfViewerClient url={news.attachedFile.url} fileName={news.attachedFile.name} />
+                      </div>
+                    )}
                   </div>
-                  <figcaption>Sinh viên sôi nổi trao đổi với chuyên gia về chiến lược đầu tư và tâm lý thị trường</figcaption>
-                </figure>
-
-                <p>
-                  Buổi chia sẻ diễn ra trong không khí sôi nổi với nhiều câu hỏi trao đổi giữa sinh viên và chuyên gia xoay quanh chiến lược đầu tư, tâm lý thị trường và xu hướng tài chính hiện nay.
-                </p>
-
-                <p>
-                  Việc mời chuyên gia tham gia giảng dạy và chia sẻ trong lớp học là một trong những hoạt động được Khoa Tài chính – Ngân hàng đẩy mạnh nhằm tăng cường kết nối giữa đào tạo học thuật và thực tiễn nghề nghiệp, giúp sinh viên có thêm trải nghiệm thực tế ngay trong quá trình học tập.
-                </p>
-
-                <p>
-                  Khoa Tài chính - Ngân hàng trân trọng cảm ơn ThS. Bùi Việt Cường đã dành thời gian tham gia chương trình và mang đến những chia sẻ giá trị cho sinh viên.
-                </p>
+                )}
 
                 {/* Credit */}
-                <div className="news-article-credit">
-                  <p><strong>Tin:</strong> Minh Lan</p>
-                  <p><strong>Hình:</strong> Minh Lan</p>
+                <div className="news-article-credit mt-10">
+                  <p><strong>Nguồn bài viết:</strong> {news.author?.name || 'Viện Đào tạo Sau Đại học'}</p>
                 </div>
 
                 {/* Tags */}
-                <div className="news-article-tags">
-                  <span className="news-tags-label"><Tag size={16} /> Thẻ</span>
-                  <a href="#" className="news-tag">Hoạt Động Sinh Viên</a>
-                  <a href="#" className="news-tag">Khoa Tài Chính - Ngân Hàng</a>
-                  <a href="#" className="news-tag">Hợp Tác Doanh Nghiệp</a>
-                </div>
+                {news.tags && news.tags.length > 0 && (
+                  <div className="news-article-tags mt-6">
+                    <span className="news-tags-label"><Tag size={16} /> Thẻ</span>
+                    {news.tags.map((tag: string) => (
+                      <a href={`/news?search=${tag}`} key={tag} className="news-tag">{tag}</a>
+                    ))}
+                  </div>
+                )}
               </article>
 
               {/* RIGHT: Sidebar */}
-              <aside className="news-sidebar">
+              <aside className="news-sidebar w-full">
                 {/* Recent News Widget */}
                 <div className="news-widget">
                   <h3 className="news-widget-title">Tin tức gần đây</h3>
                   <div className="news-widget-list">
-                    {recentNews.map((item, idx) => (
-                      <a href="#" key={idx} className="news-widget-card">
-                        <div className="news-widget-thumb">
-                          <Image src={item.img} alt={item.title} fill />
-                        </div>
+                    {recentNews.map((item: any, idx) => (
+                      <a href={`/news/${item.slug}`} key={idx} className="news-widget-card">
+                        {item.thumbnail && (
+                          <div className="news-widget-thumb">
+                            <Image src={item.thumbnail} alt={item.title} fill style={{ objectFit: 'cover' }} />
+                          </div>
+                        )}
                         <div className="news-widget-info">
-                          <span className="news-widget-cat">{item.category}</span>
-                          <h4 className="news-widget-card-title">{item.title}</h4>
+                          <span className="news-widget-cat" style={{ color: item.category?.color || '#005496' }}>{item.category?.name || 'TIN TỨC'}</span>
+                          <h4 className="news-widget-card-title line-clamp-2">{item.title}</h4>
                         </div>
                       </a>
                     ))}

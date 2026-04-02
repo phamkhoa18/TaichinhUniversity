@@ -44,5 +44,8 @@ next-env.d.ts
 /public/uploads/**
 !/public/uploads/**/.gitkeep
 
+# data directory (production uploads, backups)
+/data/
+
 # temp scripts
 create_structure.ps1

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 /* ═══════════════════════════════════════
    Types
@@ -496,14 +497,18 @@ export default function AIChatbotAdminPage() {
                   placeholder="Tìm file hoặc ngành..."
                   className="w-full pl-9 pr-4 py-2 text-[12px] font-medium bg-white border border-slate-200 rounded-lg outline-none focus:border-[#005496] focus:ring-1 focus:ring-[#005496]/20 transition-all" />
               </div>
-              <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}
-                className="w-full md:w-auto px-3 py-2 text-[12px] font-semibold bg-white border border-slate-200 rounded-lg text-slate-700 outline-none">
-                <option value="all">Tất cả bậc học</option>
-                <option value="chung">Thông tin chung</option>
-                <option value="thac_si">Thạc sĩ</option>
-                <option value="tien_si">Tiến sĩ</option>
-                <option value="dai_hoc">Đại học</option>
-              </select>
+              <Select value={filterLevel} onValueChange={v => setFilterLevel(v)}>
+                <SelectTrigger className="w-full md:w-[180px] h-9 rounded-lg border-slate-200 text-[12px] font-semibold bg-white">
+                  <SelectValue placeholder="Tất cả bậc học" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả bậc học</SelectItem>
+                  <SelectItem value="chung">Thông tin chung</SelectItem>
+                  <SelectItem value="thac_si">Thạc sĩ</SelectItem>
+                  <SelectItem value="tien_si">Tiến sĩ</SelectItem>
+                  <SelectItem value="dai_hoc">Đại học</SelectItem>
+                </SelectContent>
+              </Select>
               <span className="text-[11px] font-bold text-slate-400">{filteredDocs.length} kết quả</span>
             </div>
 
@@ -639,12 +644,18 @@ export default function AIChatbotAdminPage() {
             <div className="grid gap-4 md:grid-cols-3 bg-slate-50/50 p-4 rounded-xl border border-slate-200 max-w-2xl mx-auto">
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">Cấp bậc đào tạo</label>
-                <select value={uploadLevel} onChange={e => setUploadLevel(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 outline-none focus:border-[#005496]">
-                  <option value="">Tự động (Auto)</option>
-                  <option value="chung">Thông tin chung (Tổng quan, Cơ sở...)</option>
-                  <option value="thac_si">Thạc sĩ</option><option value="tien_si">Tiến sĩ</option><option value="dai_hoc">Đại học</option>
-                </select>
+                <Select value={uploadLevel} onValueChange={v => setUploadLevel(v)}>
+                  <SelectTrigger className="w-full h-9 rounded-lg border-slate-200 text-[12px] font-semibold bg-white">
+                    <SelectValue placeholder="Tự động (Auto)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Tự động (Auto)</SelectItem>
+                    <SelectItem value="chung">Thông tin chung (Tổng quan, Cơ sở...)</SelectItem>
+                    <SelectItem value="thac_si">Thạc sĩ</SelectItem>
+                    <SelectItem value="tien_si">Tiến sĩ</SelectItem>
+                    <SelectItem value="dai_hoc">Đại học</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">Tên ngành</label>
@@ -743,14 +754,18 @@ export default function AIChatbotAdminPage() {
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">Cấp bậc đào tạo</label>
-                <select value={composeLevel} onChange={e => setComposeLevel(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 outline-none focus:border-[#005496]">
-                  <option value="">Tự động (Auto)</option>
-                  <option value="chung">Thông tin chung (Tổng quan, Cơ sở...)</option>
-                  <option value="thac_si">Thạc sĩ</option>
-                  <option value="tien_si">Tiến sĩ</option>
-                  <option value="dai_hoc">Đại học</option>
-                </select>
+                <Select value={composeLevel} onValueChange={v => setComposeLevel(v)}>
+                  <SelectTrigger className="w-full h-9 rounded-lg border-slate-200 text-[12px] font-semibold bg-white">
+                    <SelectValue placeholder="Tự động (Auto)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Tự động (Auto)</SelectItem>
+                    <SelectItem value="chung">Thông tin chung (Tổng quan, Cơ sở...)</SelectItem>
+                    <SelectItem value="thac_si">Thạc sĩ</SelectItem>
+                    <SelectItem value="tien_si">Tiến sĩ</SelectItem>
+                    <SelectItem value="dai_hoc">Đại học</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">Tên ngành</label>

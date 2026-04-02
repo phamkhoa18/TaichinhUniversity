@@ -7,14 +7,22 @@ export interface INews extends Document {
   slug: string
   content: string
   excerpt?: string
+  seoDescription?: string
   thumbnail?: string
   status: NewsStatus
   category: mongoose.Types.ObjectId
   tags: string[]
+  attachedFile?: {
+    name: string
+    url: string
+  }
   author: mongoose.Types.ObjectId | IUser
   publishedAt?: Date
   views: number
   isPinned: boolean
+  hideThumbnail: boolean
+  hidePdfPreview: boolean
+  tocEnabled: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -40,6 +48,10 @@ const newsSchema = new Schema<INews>(
       type: String,
       maxlength: 500,
     },
+    seoDescription: {
+      type: String,
+      maxlength: 500,
+    },
     thumbnail: {
       type: String,
     },
@@ -57,6 +69,10 @@ const newsSchema = new Schema<INews>(
       type: [String],
       default: [],
     },
+    attachedFile: {
+      name: String,
+      url: String,
+    },
     author: {
       type: Schema.Types.ObjectId,
       ref: 'User',
@@ -73,13 +89,28 @@ const newsSchema = new Schema<INews>(
       type: Boolean,
       default: false,
     },
+    hideThumbnail: {
+      type: Boolean,
+      default: false,
+    },
+    hidePdfPreview: {
+      type: Boolean,
+      default: false,
+    },
+    tocEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
   }
 )
 
-const News: Model<INews> =
-  mongoose.models.News || mongoose.model<INews>('News', newsSchema)
+if (mongoose.models.News) {
+  delete mongoose.models.News;
+}
+
+const News: Model<INews> = mongoose.model<INews>('News', newsSchema)
 
 export default News

@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { 
-  CalendarIcon, ChevronLeft, Save, Loader2, Image as ImageIcon, 
+import {
+  CalendarIcon, ChevronLeft, Save, Loader2, Image as ImageIcon,
   Send, X, Plus, Tag, Eye, Globe, Archive, FileText,
   Clock, Hash, Sparkles, ExternalLink, AlertCircle, CheckCircle2,
   ListTree, ToggleLeft, ToggleRight, ChevronDown, GripVertical
@@ -17,7 +17,10 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RichTextEditor } from '@/components/ui/rich-text-editor'
+import { DateTimePicker } from '@/components/ui/date-time-picker'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { showToast } from '@/lib/toast'
 
 /* ═══════════════════════════════════════
    Helpers
@@ -40,11 +43,11 @@ function countWords(html: string) {
 /* ═══════════════════════════════════════
    SECTION CARD — reusable wrapper 
    ═══════════════════════════════════════ */
-function SideSection({ 
-  icon: Icon, title, badge, action, children, collapsible = false, defaultOpen = true 
-}: { 
+function SideSection({
+  icon: Icon, title, badge, action, children, collapsible = false, defaultOpen = true
+}: {
   icon: any; title: string; badge?: React.ReactNode; action?: React.ReactNode;
-  children: React.ReactNode; collapsible?: boolean; defaultOpen?: boolean 
+  children: React.ReactNode; collapsible?: boolean; defaultOpen?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
@@ -90,8 +93,10 @@ export default function CreateNewsPage() {
   const [date, setDate] = useState<Date>(new Date())
   const [tagInput, setTagInput] = useState('')
   const [thumbnail, setThumbnail] = useState<string | null>(null)
+  const [attachedFile, setAttachedFile] = useState<{ name: string; url: string } | null>(null)
   const [categories, setCategories] = useState<CategoryOption[]>([])
   const [activeTab, setActiveTab] = useState<'editor' | 'seo'>('editor')
+  const [isPreview, setIsPreview] = useState(false)
 
   // Table of Contents
   const [tocEnabled, setTocEnabled] = useState(false)
@@ -103,9 +108,12 @@ export default function CreateNewsPage() {
     category: '',
     status: 'DRAFT',
     excerpt: '',
+    seoDescription: '',
     content: '',
     tags: [] as string[],
     isPinned: false,
+    hideThumbnail: false,
+    hidePdfPreview: false,
   })
 
   // Fetch categories
@@ -118,7 +126,7 @@ export default function CreateNewsPage() {
           setFormData(prev => ({ ...prev, category: json.data[0]._id }))
         }
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   // Extract TOC from content
@@ -164,17 +172,58 @@ export default function CreateNewsPage() {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
-    input.onchange = () => {
+    input.onchange = async () => {
       const file = input.files?.[0]
-      if (file) setThumbnail(URL.createObjectURL(file))
+      if (!file) return
+
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('category', 'images')
+
+      showToast.promise(
+        fetch('/api/upload', { method: 'POST', body: fd })
+          .then(async (res) => {
+            const data = await res.json()
+            if (!data.success) throw new Error(data.error || 'Upload thất bại')
+            setThumbnail(data.url)
+            return data
+          }),
+        { loading: 'Đang tải ảnh lên...', success: 'Đã tải ảnh thành công!', error: (err: any) => err.message }
+      )
     }
     input.click()
   }
 
-  const handleSubmit = async (status: string) => {
+  const handleFileUpload = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'application/pdf'
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) return
+
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('category', 'documents')
+
+      showToast.promise(
+        fetch('/api/upload', { method: 'POST', body: fd })
+          .then(async (res) => {
+            const data = await res.json()
+            if (!data.success) throw new Error(data.error || 'Upload thất bại')
+            setAttachedFile({ name: file.name, url: data.url })
+            return data
+          }),
+        { loading: 'Đang tải tài liệu lên...', success: 'Đã tải tài liệu thành công!', error: (err: any) => err.message }
+      )
+    }
+    input.click()
+  }
+
+  const handleSubmit = async () => {
     if (!formData.title.trim()) return setError('Vui lòng nhập tiêu đề bài viết')
     if (!formData.category) return setError('Vui lòng chọn danh mục')
-    
+
     setIsSubmitting(true)
     setError('')
 
@@ -184,23 +233,27 @@ export default function CreateNewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          status,
           tocEnabled,
+          thumbnail,
+          attachedFile,
           slug: formData.slug || slugify(formData.title),
-          publishedAt: status === 'PUBLISHED' ? date : undefined,
+          publishedAt: formData.status === 'PUBLISHED' ? date : undefined,
         }),
       })
       const json = await res.json()
 
       if (!json.success) {
         setError(json.error)
+        showToast.error('Không thể lưu bài viết', json.error)
         setIsSubmitting(false)
       } else {
         setSuccess(true)
+        showToast.success('Bài viết đã được lưu thành công!')
         setTimeout(() => router.push('/admin/thong-bao'), 1500)
       }
     } catch {
       setError('Lỗi kết nối server')
+      showToast.error('Lỗi kết nối server')
       setIsSubmitting(false)
     }
   }
@@ -212,7 +265,7 @@ export default function CreateNewsPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto animate-in fade-in duration-500">
-      
+
       {/* ══════════════════════════════════════
          TOP BAR — Header + Actions
          ══════════════════════════════════════ */}
@@ -245,29 +298,26 @@ export default function CreateNewsPage() {
 
         {/* Right: actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" className="h-9 px-3 text-[12px] font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg">
-            <Eye className="w-3.5 h-3.5 mr-1.5" />Xem trước
-          </Button>
-          <Button 
-            onClick={() => handleSubmit('DRAFT')} 
-            disabled={isSubmitting || success}
-            variant="outline" size="sm"
-            className="h-9 px-3 text-[12px] font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-lg"
+          <Button
+            onClick={() => setIsPreview(!isPreview)}
+            variant={isPreview ? "default" : "outline"}
+            size="sm"
+            className={`h-9 px-3 text-[12px] font-semibold rounded-lg ${isPreview ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
           >
-            <Save className="w-3.5 h-3.5 mr-1.5" />Lưu nháp
+            {isPreview ? <><X className="w-3.5 h-3.5 mr-1.5" />Đóng xem trước</> : <><Eye className="w-3.5 h-3.5 mr-1.5" />Xem trước</>}
           </Button>
-          <Button 
-            onClick={() => handleSubmit('PUBLISHED')} 
+          <Button
+            onClick={handleSubmit}
             disabled={isSubmitting || success || !formData.title}
             size="sm"
-            className="h-9 px-4 text-[12px] font-bold rounded-lg bg-[#005496] hover:bg-[#004377] text-white active:scale-[0.97] transition-all"
+            className="h-9 px-5 text-[12px] font-bold rounded-lg bg-[#005496] hover:bg-[#004377] text-white active:scale-[0.97] transition-all shadow-sm"
           >
             {success ? (
-              <><CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />Đã lưu!</>
+              <><CheckCircle2 className="w-4 h-4 mr-1.5" />Đã tạo!</>
             ) : isSubmitting ? (
-              <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Đang lưu...</>
+              <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" />Đang tạo...</>
             ) : (
-              <><Send className="w-3.5 h-3.5 mr-1.5" />Xuất bản</>
+              <><Send className="w-4 h-4 mr-1.5" />Khởi tạo bài viết</>
             )}
           </Button>
         </div>
@@ -290,115 +340,137 @@ export default function CreateNewsPage() {
          GRID LAYOUT
          ══════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        
+
         {/* ────── CỘT CHÍNH (8/12) ────── */}
         <div className="lg:col-span-8 space-y-5">
-          
-          {/* Card: Tiêu đề + Slug */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
-            <div>
-              <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">
-                Tiêu đề <span className="text-rose-400 normal-case text-[10px]">• bắt buộc</span>
-              </label>
-              <input
-                name="title"
-                placeholder="Nhập tiêu đề bài viết..."
-                className="w-full h-12 px-4 text-[17px] font-bold text-slate-900 placeholder:text-slate-300 placeholder:font-normal bg-white border border-slate-200 rounded-xl outline-none focus:border-[#005496] focus:ring-2 focus:ring-[#005496]/10 transition-all"
-                value={formData.title}
-                onChange={handleChange}
-              />
-            </div>
 
-            <div>
-              <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">Đường dẫn</label>
-              <div className="flex items-center bg-slate-50 rounded-lg border border-slate-200 overflow-hidden focus-within:border-[#005496] focus-within:ring-2 focus-within:ring-[#005496]/10 transition-all">
-                <span className="text-[11px] text-slate-500 font-mono px-3 h-9 flex items-center bg-slate-100 border-r border-slate-200 select-none shrink-0">sdh.ufm.edu.vn/thong-bao/</span>
-                <input
-                  name="slug"
-                  placeholder="duong-dan-tu-dong"
-                  className="flex-1 h-9 px-3 bg-transparent text-[12px] font-mono text-slate-800 placeholder:text-slate-400 outline-none"
-                  value={formData.slug}
-                  onChange={handleChange}
-                />
-              </div>
+          {isPreview ? (
+            <div className="bg-white rounded-xl border border-slate-200 p-8 min-h-[600px] jodit-content-render max-w-none">
+              <h1 className="text-3xl font-bold mb-4">{formData.title || 'Tiêu đề bài viết'}</h1>
+              <div dangerouslySetInnerHTML={{ __html: formData.content || '<p class="text-slate-400 italic">Nội dung trống...</p>' }} />
             </div>
-          </div>
-
-          {/* Card: Editor Tabs */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            {/* Tab bar */}
-            <div className="flex items-center gap-0 border-b border-slate-100 px-1 bg-white">
-              {[
-                { key: 'editor', label: 'Nội dung', icon: FileText },
-                { key: 'seo', label: 'SEO & Tóm tắt', icon: Sparkles },
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-4 py-3 text-[12px] font-semibold transition-all relative",
-                    activeTab === tab.key
-                      ? 'text-[#005496]'
-                      : 'text-slate-600 hover:text-slate-800'
-                  )}
-                >
-                  <tab.icon className="w-3.5 h-3.5" />
-                  {tab.label}
-                  {activeTab === tab.key && (
-                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#005496] rounded-t-full" />
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Editor */}
-            {activeTab === 'editor' ? (
-              <div className="min-h-[520px]">
-                <RichTextEditor
-                  content={formData.content}
-                  onChange={(html: string) => setFormData(prev => ({ ...prev, content: html }))}
-                  minHeight={520}
-                />
-              </div>
-            ) : (
-              <div className="p-5 space-y-5">
-                {/* Excerpt */}
+          ) : (
+            <>
+              {/* Card: Tiêu đề + Slug */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
                 <div>
-                  <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">Tóm tắt (Meta Description)</label>
-                  <textarea
-                    name="excerpt"
-                    placeholder="Viết 1-2 câu mô tả cho Google và mạng xã hội..."
-                    className="w-full h-24 p-3.5 text-[13px] text-slate-800 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#005496]/10 focus:border-[#005496] transition-all resize-none placeholder:text-slate-300 leading-relaxed"
-                    value={formData.excerpt}
+                  <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">
+                    Tiêu đề <span className="text-rose-400 normal-case text-[10px]">• bắt buộc</span>
+                  </label>
+                  <input
+                    name="title"
+                    placeholder="Nhập tiêu đề bài viết..."
+                    className="w-full h-12 px-4 text-[17px] font-bold text-slate-900 placeholder:text-slate-300 placeholder:font-normal bg-white border border-slate-200 rounded-xl outline-none focus:border-[#005496] focus:ring-2 focus:ring-[#005496]/10 transition-all"
+                    value={formData.title}
                     onChange={handleChange}
-                    maxLength={300}
                   />
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all duration-500",
-                          excerptLen > 240 ? "bg-emerald-500" : excerptLen > 120 ? "bg-blue-400" : "bg-slate-300"
-                        )}
-                        style={{ width: `${Math.min(100, (excerptLen / 300) * 100)}%` }}
+                </div>
+
+                <div>
+                  <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">Đường dẫn</label>
+                  <div className="flex items-center bg-slate-50 rounded-lg border border-slate-200 overflow-hidden focus-within:border-[#005496] focus-within:ring-2 focus-within:ring-[#005496]/10 transition-all">
+                    <span className="text-[11px] text-slate-500 font-mono px-3 h-9 flex items-center bg-slate-100 border-r border-slate-200 select-none shrink-0">sdh.ufm.edu.vn/thong-bao/</span>
+                    <input
+                      name="slug"
+                      placeholder="duong-dan-tu-dong"
+                      className="flex-1 h-9 px-3 bg-transparent text-[12px] font-mono text-slate-800 placeholder:text-slate-400 outline-none"
+                      value={formData.slug}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card: Editor Tabs */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                {/* Tab bar */}
+                <div className="flex items-center gap-0 border-b border-slate-100 px-1 bg-white">
+                  {[
+                    { key: 'editor', label: 'Nội dung', icon: FileText },
+                    { key: 'seo', label: 'SEO & Tóm tắt', icon: Sparkles },
+                  ].map(tab => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key as any)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-4 py-3 text-[12px] font-semibold transition-all relative",
+                        activeTab === tab.key
+                          ? 'text-[#005496]'
+                          : 'text-slate-600 hover:text-slate-800'
+                      )}
+                    >
+                      <tab.icon className="w-3.5 h-3.5" />
+                      {tab.label}
+                      {activeTab === tab.key && (
+                        <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[#005496] rounded-t-full" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Editor */}
+                {activeTab === 'editor' ? (
+                  <div className="min-h-[520px]">
+                    <RichTextEditor
+                      content={formData.content}
+                      onChange={(html: string) => setFormData(prev => ({ ...prev, content: html }))}
+                      minHeight={520}
+                    />
+                  </div>
+                ) : (
+                  <div className="p-5 space-y-5">
+                    {/* Tóm tắt */}
+                    <div>
+                      <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">Mô tả ngắn (Tóm tắt)</label>
+                      <textarea
+                        name="excerpt"
+                        placeholder="Hiển thị trên trang danh sách tin tức (1-2 câu ngắn gọn)..."
+                        className="w-full h-20 p-3.5 text-[13px] text-slate-800 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#005496]/10 focus:border-[#005496] transition-all resize-none placeholder:text-slate-300 leading-relaxed"
+                        value={formData.excerpt}
+                        onChange={handleChange}
+                        maxLength={500}
                       />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 tabular-nums">{excerptLen}/300</span>
-                  </div>
-                </div>
 
-                {/* Google preview */}
-                <div>
-                  <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">Xem trước Google</label>
-                  <div className="border border-slate-200 rounded-lg p-4 bg-white">
-                    <p className="text-[#1a0dab] text-[15px] font-medium leading-snug truncate">{formData.title || 'Tiêu đề bài viết'}</p>
-                    <p className="text-[#006621] text-[11px] mt-1 truncate">sdh.ufm.edu.vn › thong-bao › {formData.slug || '...'}</p>
-                    <p className="text-slate-500 text-[12px] mt-1 line-clamp-2 leading-relaxed">{formData.excerpt || 'Mô tả tóm tắt sẽ hiển thị ở đây...'}</p>
+                    {/* Excerpt (SEO) */}
+                    <div>
+                      <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">Mô tả SEO (Meta Description)</label>
+                      <textarea
+                        name="seoDescription"
+                        placeholder="Viết 1-2 câu mô tả chi tiết tối ưu cho máy chủ tìm kiếm Google..."
+                        className="w-full h-20 p-3.5 text-[13px] text-slate-800 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#005496]/10 focus:border-[#005496] transition-all resize-none placeholder:text-slate-300 leading-relaxed"
+                        value={formData.seoDescription}
+                        onChange={handleChange}
+                        maxLength={300}
+                      />
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all duration-500",
+                              formData.seoDescription.length > 240 ? "bg-emerald-500" : formData.seoDescription.length > 120 ? "bg-blue-400" : "bg-slate-300"
+                            )}
+                            style={{ width: `${Math.min(100, (formData.seoDescription.length / 300) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 tabular-nums">{formData.seoDescription.length}/300</span>
+                      </div>
+                    </div>
+
+                    {/* Google preview */}
+                    <div>
+                      <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5 block">Xem trước Google</label>
+                      <div className="border border-slate-200 rounded-lg p-4 bg-white">
+                        <p className="text-[#1a0dab] text-[15px] font-medium leading-snug truncate">{formData.title || 'Tiêu đề bài viết'}</p>
+                        <p className="text-[#006621] text-[11px] mt-1 truncate">sdh.ufm.edu.vn › thong-bao › {formData.slug || '...'}</p>
+                        <p className="text-slate-500 text-[12px] mt-1 line-clamp-2 leading-relaxed">{formData.seoDescription || formData.excerpt || 'Mô tả tóm tắt sẽ hiển thị ở đây...'}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
         {/* ────── SIDEBAR (4/12) ────── */}
@@ -409,7 +481,7 @@ export default function CreateNewsPage() {
             <div className="p-4 space-y-3">
               <div>
                 <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1 block">Trạng thái</label>
-                <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val}))}>
+                <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({ ...prev, status: val }))}>
                   <SelectTrigger className="w-full h-9 border-slate-200 rounded-lg text-[12px] font-medium">
                     <SelectValue />
                   </SelectTrigger>
@@ -427,28 +499,39 @@ export default function CreateNewsPage() {
 
               <div>
                 <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1 block">Ngày xuất bản</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-medium border-slate-200 h-9 px-3 rounded-lg text-[12px]">
-                      <CalendarIcon className="mr-2 h-3 w-3 text-slate-400" />
-                      {date ? format(date, 'dd/MM/yyyy') : 'Chọn ngày'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 border-slate-200 rounded-xl" align="start">
-                    <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} className="rounded-xl" />
-                  </PopoverContent>
-                </Popover>
+                <DateTimePicker
+                  date={date}
+                  setDate={(d) => { if (d) setDate(d) }}
+                  className="h-9 w-full px-3 text-[12px] font-medium border-slate-200 rounded-lg text-slate-700 bg-white"
+                />
               </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer py-1.5 px-2 rounded-lg hover:bg-slate-50 transition-colors -mx-1">
-                <input
-                  type="checkbox"
-                  checked={formData.isPinned}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isPinned: e.target.checked }))}
-                  className="w-3.5 h-3.5 rounded border-slate-300 text-[#005496] accent-[#005496]"
-                />
-                <span className="text-[12px] font-medium text-slate-800">Ghim lên đầu trang</span>
-              </label>
+              <div className="pt-3 border-t border-slate-100 flex flex-col gap-3">
+                <div className="flex items-center justify-between group cursor-pointer">
+                  <label htmlFor="isPinned" className="text-[12px] font-medium text-slate-800 cursor-pointer group-hover:text-[#005496] transition-colors leading-tight">Ghim lên đầu trang</label>
+                  <Switch
+                    id="isPinned"
+                    checked={formData.isPinned}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPinned: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between group cursor-pointer">
+                  <label htmlFor="hideThumbnail" className="text-[12px] font-medium text-slate-800 cursor-pointer group-hover:text-[#005496] transition-colors leading-tight pr-4">Ẩn ảnh đại diện trong bài viết</label>
+                  <Switch
+                    id="hideThumbnail"
+                    checked={formData.hideThumbnail}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hideThumbnail: checked }))}
+                  />
+                </div>
+                <div className="flex items-center justify-between group cursor-pointer">
+                  <label htmlFor="hidePdfPreview" className="text-[12px] font-medium text-slate-800 cursor-pointer group-hover:text-[#005496] transition-colors leading-tight pr-4">Ẩn khung xem trước PDF (chỉ hiện nút tải)</label>
+                  <Switch
+                    id="hidePdfPreview"
+                    checked={formData.hidePdfPreview}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hidePdfPreview: checked }))}
+                  />
+                </div>
+              </div>
             </div>
           </SideSection>
 
@@ -515,7 +598,7 @@ export default function CreateNewsPage() {
                   {categories.map(cat => (
                     <button
                       key={cat._id}
-                      onClick={() => setFormData(prev => ({...prev, category: cat._id}))}
+                      onClick={() => setFormData(prev => ({ ...prev, category: cat._id }))}
                       className={cn(
                         "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left",
                         formData.category === cat._id
@@ -606,6 +689,34 @@ export default function CreateNewsPage() {
                   <ImageIcon className="w-5 h-5 text-slate-300 group-hover:text-[#005496] mb-1.5 transition-colors" />
                   <span className="text-[11px] font-semibold text-slate-500 group-hover:text-[#005496]">Tải ảnh lên</span>
                   <span className="text-[9px] text-slate-400 mt-0.5">16:9 · PNG, JPG, WebP</span>
+                </button>
+              )}
+            </div>
+          </SideSection>
+
+          {/* ─── Tài liệu đính kèm ─── */}
+          <SideSection icon={FileText} title="Tài liệu đính kèm (PDF)" collapsible defaultOpen>
+            <div className="p-4">
+              {attachedFile ? (
+                <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <FileText className="w-5 h-5 text-rose-500 shrink-0" />
+                    <span className="text-[12px] font-medium text-slate-700 truncate" title={attachedFile.name}>
+                      {attachedFile.name}
+                    </span>
+                  </div>
+                  <button onClick={() => setAttachedFile(null)} className="w-7 h-7 bg-white border border-slate-200 rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-50 transition-all shrink-0">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleFileUpload}
+                  className="w-full h-24 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50/50 hover:bg-[#005496]/[0.02] hover:border-[#005496]/30 flex flex-col items-center justify-center transition-all group"
+                >
+                  <FileText className="w-5 h-5 text-slate-300 group-hover:text-[#005496] mb-1.5 transition-colors" />
+                  <span className="text-[11px] font-semibold text-slate-500 group-hover:text-[#005496]">Tải file PDF lên</span>
+                  <span className="text-[9px] text-slate-400 mt-0.5">Tối đa 10MB</span>
                 </button>
               )}
             </div>
