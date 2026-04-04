@@ -4,6 +4,7 @@ import { SiteSettingsProvider } from "@/store/SiteSettingsProvider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://daotaosdh.ufm.edu.vn"),
   title: {
     default: "Viện Đào tạo Sau Đại học – Đại học Tài chính – Marketing (UFM)",
     template: "%s | Viện SĐH – UFM",

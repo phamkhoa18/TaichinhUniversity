@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export default function VideoHighlight({ videoId = 'ZQ_v4hFe_3w' }: { videoId?: string }) {
+export default function VideoHighlight({ videoId, videoUrl }: { videoId?: string; videoUrl?: string }) {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -18,6 +18,18 @@ export default function VideoHighlight({ videoId = 'ZQ_v4hFe_3w' }: { videoId?: 
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Extract video id from URL if videoId is empty
+    let finalVideoId = videoId || '';
+    if (!finalVideoId && videoUrl) {
+      const match = videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      if (match) finalVideoId = match[1];
+    }
+    
+    // Fallback to a valid default if nothing found
+    if (!finalVideoId) {
+      finalVideoId = 'ZQ_v4hFe_3w';
+    }
+
     // Load YouTube IFrame API
     if (!window.YT) {
       const tag = document.createElement('script');
@@ -28,12 +40,12 @@ export default function VideoHighlight({ videoId = 'ZQ_v4hFe_3w' }: { videoId?: 
 
     const initPlayer = () => {
       playerRef.current = new window.YT.Player('ufm-yt-player', {
-        videoId: videoId,
+        videoId: finalVideoId,
         playerVars: {
           autoplay: 1,
           mute: 1,
           loop: 1,
-          playlist: videoId,
+          playlist: finalVideoId,
           controls: 0,
           showinfo: 0,
           rel: 0,
@@ -82,7 +94,7 @@ export default function VideoHighlight({ videoId = 'ZQ_v4hFe_3w' }: { videoId?: 
         playerRef.current.destroy();
       }
     };
-  }, []);
+  }, [videoId, videoUrl]);
 
   const togglePlay = useCallback(() => {
     if (!playerRef.current) return;

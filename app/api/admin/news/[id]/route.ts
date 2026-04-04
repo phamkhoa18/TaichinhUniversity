@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectToDatabase from '@/lib/db/mongodb'
 import News from '@/models/News'
+import '@/models/Category'
+import '@/models/User'
 import { auth } from '@/auth'
 import { deleteFile } from '@/lib/upload/uploadService'
 

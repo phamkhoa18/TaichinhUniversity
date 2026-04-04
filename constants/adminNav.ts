@@ -33,12 +33,12 @@ export const ADMIN_NAV: NavItem[] = [
   },
   {
     label: 'Chương trình Đào tạo',
-    href: '/admin/chuong-trinh',
+    href: '/admin/chuong-trinh-dao-tao',
     icon: 'GraduationCap',
     permission: 'program:read',
     children: [
-      { label: 'Thạc sĩ', href: '/admin/chuong-trinh/thac-si', icon: 'BookOpen', permission: 'program:read' },
-      { label: 'Tiến sĩ', href: '/admin/chuong-trinh/tien-si', icon: 'BookOpen', permission: 'program:read' },
+      { label: 'Cấp bậc & Danh sách', href: '/admin/chuong-trinh-dao-tao', icon: 'FolderTree', permission: 'program:read' },
+      { label: 'Soạn Khung mới', href: '/admin/chuong-trinh-dao-tao/tao-moi', icon: 'PenSquare', permission: 'program:read' },
     ],
   },
   {

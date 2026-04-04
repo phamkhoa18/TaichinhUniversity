@@ -38,4 +38,14 @@ export const UPLOAD_CONFIG: Record<UploadCategory, {
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
     path: 'uploads/temp',
   },
+  applicants: {
+    maxSizeMB: 10,
+    allowedTypes: [
+      'image/jpeg', 'image/png', 'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    path: 'uploads/applicants',
+  },
 }

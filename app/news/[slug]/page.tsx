@@ -5,6 +5,8 @@ import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import connectToDatabase from '@/lib/db/mongodb';
 import News from '@/models/News';
+import Category from '@/models/Category';
+import '@/models/User';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ClientTableOfContents from '@/app/components/ClientTableOfContents';
@@ -192,7 +194,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
               </article>
 
               {/* RIGHT: Sidebar */}
-              <aside className="news-sidebar w-full">
+              <aside className="news-sidebar w-full lg:sticky lg:top-[100px] h-fit">
                 {/* Recent News Widget */}
                 <div className="news-widget">
                   <h3 className="news-widget-title">Tin tức gần đây</h3>

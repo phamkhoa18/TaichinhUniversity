@@ -2,7 +2,7 @@
 // TYPES — Upload System
 // ============================================================
 
-export type UploadCategory = 'images' | 'documents' | 'banners' | 'avatars' | 'temp'
+export type UploadCategory = 'images' | 'documents' | 'banners' | 'avatars' | 'temp' | 'applicants'
 
 export interface UploadedFile {
   url: string          // Đường dẫn lưu trữ (relative hoặc CDN URL)

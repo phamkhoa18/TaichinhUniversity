@@ -1,0 +1,180 @@
+{
+  "success": true,
+  "data": {
+    "_id": "69ce1fe0834d4282f7fdb43c",
+    "heroSlides": [
+      {
+        "image": "/images/hero-banner/1.png",
+        "mobileImage": "/images/hero-banner/banner-ads.jpg",
+        "title": "",
+        "subtitle": "",
+        "order": 0,
+        "_id": "69ce1fe0834d4282f7fdb43d"
+      },
+      {
+        "image": "/api/files/images/1775131474085-phpm9o-large_vlu_ngay_tho_van_lang_lan_toa_gia_tri_thi_ca_va_ra_mat_tap_tho_tieng_tho_van_lang_4_7a3066366b.webp",
+        "mobileImage": "/api/files/images/1775131487269-avlo33-z6629836992770_7192bf01512c43c3cb4d72b4c6d8d1c5.webp",
+        "title": "",
+        "subtitle": "",
+        "order": 0,
+        "_id": "69ce5b626ce5ba6f686db22e"
+      }
+    ],
+    "videoHighlight": {
+      "url": "https://www.youtube.com/watch?v=BgY35O5C0LQ",
+      "videoId": "",
+      "title": "Nâng tầm tư duy, kiến tạo tương lai đột phá 2",
+      "desc": "Viện Đào tạo Sau Đại học UFM không chỉ trang bị nền tảng kiến thức chuyên sâu cấp quản lý, mà còn khơi dậy tư duy nghiên cứu độc lập, giúp học viên nhạy bén với ý tưởng mới, làm chủ sự thay đổi và tạo bệ phóng vững chắc cho những đột phá chiến lược trong sự nghiệp.",
+      "linkText": "Tìm hiểu thêm về chúng tôi",
+      "linkUrl": "#"
+    },
+    "aboutStats": [
+      {
+        "value": "5.000+",
+        "desc": "học viên cao học và nghiên cứu sinh",
+        "order": 0,
+        "_id": "69ce1fe0834d4282f7fdb43e"
+      },
+      {
+        "value": "12",
+        "desc": "chương trình đào tạo Thạc sĩ và Tiến sĩ",
+        "order": 1,
+        "_id": "69ce1fe0834d4282f7fdb43f"
+      },
+      {
+        "value": "92%",
+        "desc": "học viên thăng tiến trong vòng 1 năm",
+        "order": 2,
+        "_id": "69ce1fe0834d4282f7fdb440"
+      }
+    ],
+    "achievements": [
+      {
+        "image": "/images/hero-campus.png",
+        "title": "9 chương trình Thạc sĩ và 3 chương trình Tiến sĩ đạt chuẩn kiểm định chất lượng",
+        "order": 0,
+        "_id": "69ce1fe0834d4282f7fdb442"
+      },
+      {
+        "image": "/images/lecture-hall.png",
+        "title": "Đội ngũ giảng viên 100% trình độ Tiến sĩ, Phó Giáo sư, Giáo sư",
+        "order": 1,
+        "_id": "69ce1fe0834d4282f7fdb443"
+      },
+      {
+        "image": "/images/students-library.png",
+        "title": "Hệ thống số hóa toàn diện – Đào tạo kết hợp trực tiếp và trực tuyến",
+        "order": 2,
+        "_id": "69ce1fe0834d4282f7fdb444"
+      }
+    ],
+    "createdAt": "2026-04-02T07:50:56.295Z",
+    "updatedAt": "2026-04-04T03:47:45.911Z",
+    "__v": 3,
+    "featuredNewsIds": [],
+    "latestNews": [
+      {
+        "_id": "69ca3d72818353effbfbc310",
+        "title": "Ngày thơ Văn Lang: Lan tỏa giá trị thi ca và ra mắt tập thơ “Tiếng thơ Văn Lang”",
+        "slug": "ngay-tho-van-lang-lan-toa-gia-tri-thi-ca-va-ra-mat-tap-tho-tieng-tho-van-lang",
+        "thumbnail": null,
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [
+          "khoa phạm"
+        ],
+        "publishedAt": "2026-03-30T09:08:02.857Z",
+        "isPinned": true
+      },
+      {
+        "_id": "69ce04de834d4282f7fda745",
+        "title": "UFM công bố điểm chuẩn xét tuyển sớm năm 2026 đợt 1",
+        "slug": "tin-tuc-ufm-demo-1-1775109342043",
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [],
+        "publishedAt": "2026-04-01T05:54:34.452Z",
+        "isPinned": false
+      },
+      {
+        "_id": "69ce04de834d4282f7fda746",
+        "title": "Sinh viên UFM đạt giải cao trong cuộc thi Nghiên cứu khoa học Euréka số 2",
+        "slug": "tin-tuc-ufm-demo-2-1775109342132",
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [],
+        "publishedAt": "2026-03-31T05:54:12.577Z",
+        "isPinned": false
+      },
+      {
+        "_id": "69ce04de834d4282f7fda747",
+        "title": "Viện Đào tạo Sau đại học UFM khai giảng khóa Thạc sĩ khóa 3",
+        "slug": "tin-tuc-ufm-demo-3-1775109342132",
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [],
+        "publishedAt": "2026-03-30T05:55:11.664Z",
+        "isPinned": false
+      },
+      {
+        "_id": "69c92bfe80da0ab442880327",
+        "title": "Talkshow Human-AI: Khi công nghệ nâng tầm trải nghiệm du lịch",
+        "slug": "talkshow-human-ai-khi-cong-nghe-nang-tam-trai-nghiem-du-lich",
+        "thumbnail": "/api/files/images/1774791656935-q1m834-large_vlu_talkshow_human_ai_khi_cong_nghe_nang_tam_trai_nghiem_du_lich_b_359b3cc9ee.jpg",
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [
+          "khoa bạn"
+        ],
+        "publishedAt": "2026-03-29T13:41:18.972Z",
+        "isPinned": false
+      },
+      {
+        "_id": "69ce04de834d4282f7fda748",
+        "title": "Hội thảo quốc tế về Kinh tế - Tài chính: Góc nhìn từ chuyên gia UFM phần 4",
+        "slug": "tin-tuc-ufm-demo-4-1775109342132",
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [],
+        "publishedAt": "2026-03-29T05:55:41.989Z",
+        "isPinned": false
+      },
+      {
+        "_id": "69ce04de834d4282f7fda749",
+        "title": "Trường ĐH Tài chính - Marketing ký kết hợp tác với doanh nghiệp đợt 5",
+        "slug": "tin-tuc-ufm-demo-5-1775109342132",
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [],
+        "publishedAt": "2026-03-28T05:55:21.483Z",
+        "isPinned": false
+      },
+      {
+        "_id": "69ce04de834d4282f7fda74a",
+        "title": "Sôi động lễ hội chào đón Tân sinh viên khóa mới tại cơ sở Quận 7 - Phần 6",
+        "slug": "tin-tuc-ufm-demo-6-1775109342132",
+        "category": {
+          "_id": "69c92b6b80da0ab442880322",
+          "name": "Tin tức"
+        },
+        "tags": [],
+        "publishedAt": "2026-03-27T05:54:18.949Z",
+        "isPinned": false
+      }
+    ]
+  }
+}

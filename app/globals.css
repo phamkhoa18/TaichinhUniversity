@@ -1644,11 +1644,15 @@ ol {
   }
 
   .hero-slide {
+    position: absolute;
+  }
+
+  .hero-slide.active {
     position: relative;
   }
 }
 
-.hero-slide.active .hero-slide-img {
+.swiper-slide-active .hero-slide-img {
   transform: scale(1);
 }
 
@@ -3461,6 +3465,7 @@ ol {
   align-items: center;
   gap: 5px;
 }
+
 .vlu-event-date svg {
   flex-shrink: 0;
 }
@@ -5494,9 +5499,11 @@ ol {
 .about-ufm-swiper-wrap {
   padding-bottom: 48px;
 }
+
 .about-ufm-swiper {
   overflow: visible !important;
 }
+
 .about-ufm-swiper .swiper-button-prev,
 .about-ufm-swiper .swiper-button-next {
   color: #fff;
@@ -5507,18 +5514,22 @@ ol {
   backdrop-filter: blur(4px);
   transition: background 0.3s;
 }
+
 .about-ufm-swiper .swiper-button-prev:hover,
 .about-ufm-swiper .swiper-button-next:hover {
   background: var(--ufm-blue);
 }
+
 .about-ufm-swiper .swiper-button-prev::after,
 .about-ufm-swiper .swiper-button-next::after {
   font-size: 16px;
   font-weight: 700;
 }
+
 .about-ufm-swiper .swiper-pagination {
   bottom: 0 !important;
 }
+
 .about-ufm-swiper .swiper-pagination-bullet {
   background: rgba(255, 255, 255, 0.5);
   opacity: 1;
@@ -5526,6 +5537,7 @@ ol {
   height: 10px;
   transition: all 0.3s;
 }
+
 .about-ufm-swiper .swiper-pagination-bullet-active {
   background: var(--ufm-gold, #ffd200);
   width: 28px;
@@ -5573,7 +5585,6 @@ ol {
 }
 
 .about-ufm-card-text {
-  position: relative;
   z-index: 2;
   padding: 20px;
   color: var(--white);
@@ -5848,7 +5859,7 @@ ol {
 /* ── Student Image ── */
 .consult-student {
   flex-shrink: 0;
-  width: 520px;
+  width: 460px;
   align-self: flex-end;
   position: relative;
   z-index: 3;
@@ -5859,7 +5870,7 @@ ol {
 /* ── Content (text + form) ── */
 .consult-content {
   flex: 1;
-  max-width: 660px;
+  max-width: 800px;
   padding: 48px 0 48px 32px;
   position: relative;
   z-index: 3;
@@ -5913,7 +5924,7 @@ ol {
 
 /* ── Form Card ── */
 .consult-form-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 1);
   backdrop-filter: blur(16px);
   border-radius: 20px;
   padding: 36px 36px 32px;

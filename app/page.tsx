@@ -25,10 +25,11 @@ import { useSiteSettings } from '@/store/SiteSettingsProvider';
 
 // Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
 
 /* ─── Framer Motion ─── */
 const fadeUp = {
@@ -40,38 +41,13 @@ const fadeUp = {
 };
 
 /* ─── Hero Slides ─── */
-const heroSlides = [
-  {
-    image: '/images/hero-banner/1.png',
-    mobileImage: '/images/hero-banner/banner-ads.jpg',
-    title: 'NÂNG TẦM\nTRI THỨC',
-    subtitle: 'Viện Đào tạo Sau Đại học UFM – Kiến tạo thế hệ lãnh đạo tài chính tương lai',
-  }
-];
+const heroSlides: any[] = [];
 
 /* ─── Achievements ─── */
-const achievements = [
-  {
-    image: '/images/hero-campus.png',
-    title: '9 chương trình Thạc sĩ và 3 chương trình Tiến sĩ đạt chuẩn kiểm định',
-  },
-  {
-    image: '/images/students-library.png',
-    title: 'Hệ thống số hóa toàn diện – Đào tạo kết hợp trực tiếp và trực tuyến',
-  },
-  {
-    image: '/images/lecture-hall.png',
-    title: 'Đội ngũ giảng viên 100% trình độ Tiến sĩ, Phó Giáo sư, Giáo sư',
-  },
-];
+const achievements: any[] = [];
 
 /* ─── Stats ─── */
-const aboutStats = [
-  { value: '5.000+', desc: 'học viên cao học và nghiên cứu sinh đang theo học' },
-  { value: '12', desc: 'chương trình đào tạo Thạc sĩ và Tiến sĩ' },
-  { value: '92%', desc: 'học viên thăng tiến trong vòng 1 năm sau tốt nghiệp' },
-  { value: '150+', desc: 'đối tác doanh nghiệp và tổ chức quốc tế' },
-];
+const aboutStats: any[] = [];
 
 
 /* ─── Life at UFM photos ─── */
@@ -114,13 +90,13 @@ export default function HomePage() {
 
   const activeHeroSlides = config?.heroSlides?.length > 0 ? config.heroSlides : heroSlides;
   const activeStats = config?.aboutStats?.length > 0 ? config.aboutStats : aboutStats;
-  const activeAboutNews = config?.featuredNewsIds?.length > 0 ? 
+  const activeAboutNews = config?.featuredNewsIds?.length > 0 ?
     config.featuredNewsIds.filter(Boolean).map((n: any) => ({
       slug: n.slug,
       title: n.title,
       image: n.thumbnail || '/images/default.jpg'
-    })) 
-  : (config?.achievements?.length > 0 ? config.achievements : achievements);
+    }))
+    : (config?.achievements?.length > 0 ? config.achievements : achievements);
 
   const activeFeaturedNews = (config?.latestNews && config.latestNews[0]) ? {
     slug: config.latestNews[0].slug,
@@ -128,14 +104,14 @@ export default function HomePage() {
     title: config.latestNews[0].title,
     image: config.latestNews[0].thumbnail || '/images/default.jpg'
   } : null;
-  const activeSideNews = (config?.latestNews && config.latestNews.length > 1) ? 
+  const activeSideNews = (config?.latestNews && config.latestNews.length > 1) ?
     config.latestNews.slice(1, 5).map((n: any) => ({
       slug: n.slug,
       tag: n.category?.name || 'TIN TỨC',
       title: n.title,
       image: n.thumbnail || '/images/default.jpg'
-    })) 
-  : [];
+    }))
+    : [];
 
   const activeEventCards = (config?.latestNews && config.latestNews.length > 5) ?
     config.latestNews.slice(5, 8).map((n: any) => ({
@@ -145,15 +121,9 @@ export default function HomePage() {
       title: n.title,
       image: n.thumbnail || '/images/default.jpg'
     }))
-  : [];
+    : [];
 
-  const activeVideo = config?.videoHighlight || {
-    title: 'Nâng tầm tư duy, kiến tạo tương lai đột phá',
-    desc: 'Viện Đào tạo Sau Đại học UFM không chỉ trang bị nền tảng kiến thức chuyên sâu cấp quản lý, mà còn khơi dậy tư duy nghiên cứu độc lập, giúp học viên nhạy bén với ý tưởng mới, làm chủ sự thay đổi và tạo bệ phóng vững chắc cho những đột phá chiến lược trong sự nghiệp.',
-    linkText: 'Tìm hiểu thêm về chúng tôi',
-    linkUrl: '#',
-    videoId: 'ZQ_v4hFe_3w'
-  };
+  const activeVideo = config?.videoHighlight || null;
 
   // Chatbot hiển thị dựa trên settings (mặc định: hiện)
   const showChatbot = settings?.appearance?.showChatbot !== false;
@@ -173,93 +143,88 @@ export default function HomePage() {
 
       {/* ══════════════════════  HERO – Image Only Slideshow  ══════════════════════ */}
       <section className="hero-banner">
-        <div className="hero-slider">
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay, EffectFade]}
+          effect="fade"
+          slidesPerView={1}
+          navigation={{
+            nextEl: '.hero-arrow-next',
+            prevEl: '.hero-arrow-prev',
+          }}
+          pagination={{
+            clickable: true,
+            el: '.hero-dots',
+            bulletClass: 'hero-dot',
+            bulletActiveClass: 'active'
+          }}
+          autoplay={{ delay: 5000, disableOnInteraction: false }}
+          loop={activeHeroSlides.length > 1}
+          autoHeight={true}
+          className="w-full h-full"
+        >
           {activeHeroSlides.map((slide: any, idx: number) => (
-            <div key={idx} className={`hero-slide ${idx === current ? 'active' : ''}`}>
-              <Image src={slide.image || '/images/hero-banner/1.png'} alt="" fill sizes="100vw" className="hero-slide-img hero-desktop-img" priority={idx === 0} />
-              {slide.mobileImage && (
-                <Image src={slide.mobileImage} alt="" width={1120} height={970} className="hero-slide-img hero-mobile-img" style={{ width: '100%', height: 'auto', objectFit: 'unset', transform: 'none' }} priority={idx === 0} />
-              )}
-              {slide.title && (
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-6 text-white text-shadow-md">
-                  <h1 className="text-4xl md:text-6xl font-bold whitespace-pre-line tracking-tight mb-4 max-w-4xl">{slide.title}</h1>
-                  {slide.subtitle && <p className="text-lg md:text-2xl font-medium max-w-2xl text-shadow">{slide.subtitle}</p>}
-                </div>
-              )}
-            </div>
+            <SwiperSlide key={idx}>
+              <div className="relative w-full h-full">
+                <Image src={slide.image || '/images/hero-banner/1.png'} alt="" width={3809} height={1181} className="hero-slide-img hero-desktop-img hidden md:block" style={{ width: '100%', height: 'auto', objectFit: 'cover' }} priority={idx === 0} />
+                {slide.mobileImage && (
+                  <Image src={slide.mobileImage} alt="" width={1120} height={970} className="hero-slide-img hero-mobile-img block md:hidden" style={{ width: '100%', height: 'auto', objectFit: 'unset' }} priority={idx === 0} />
+                )}
+                {slide.title && (
+                  <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-6 text-white text-shadow-md">
+                    <h1 className="text-4xl md:text-6xl font-bold whitespace-pre-line tracking-tight mb-4 max-w-4xl">{slide.title}</h1>
+                    {slide.subtitle && <p className="text-lg md:text-2xl font-medium max-w-2xl text-shadow">{slide.subtitle}</p>}
+                  </div>
+                )}
+              </div>
+            </SwiperSlide>
           ))}
-        </div>
 
-        {/* Prev / Next */}
-        <button
-          className="hero-arrow hero-arrow-prev"
-          onClick={() => setCurrent((prev) => (prev - 1 + activeHeroSlides.length) % activeHeroSlides.length)}
-          aria-label="Previous"
-        >
-          <ChevronLeft size={28} />
-        </button>
-        <button
-          className="hero-arrow hero-arrow-next"
-          onClick={() => setCurrent((prev) => (prev + 1) % activeHeroSlides.length)}
-          aria-label="Next"
-        >
-          <ChevronRight size={28} />
-        </button>
-
-        {/* Dots */}
-        <div className="hero-dots">
-          {activeHeroSlides.map((_: any, idx: number) => (
-            <button
-              key={idx}
-              className={`hero-dot ${idx === current ? 'active' : ''}`}
-              onClick={() => setCurrent(idx)}
-              aria-label={`Slide ${idx + 1}`}
-            />
-          ))}
-        </div>
+          <button className="hero-arrow hero-arrow-prev" aria-label="Previous">
+            <ChevronLeft size={28} />
+          </button>
+          <button className="hero-arrow hero-arrow-next" aria-label="Next">
+            <ChevronRight size={28} />
+          </button>
+          <div className="hero-dots"></div>
+        </Swiper>
       </section>
 
       {/* ══════════════════════  NEWS TICKER  ══════════════════════ */}
-      <div className="news-ticker">
-        <div className="news-ticker-label">
-          <Megaphone size={18} fill="currentColor" />
-          <span>TIN MỚI</span>
-        </div>
-        <div className="news-ticker-track">
-          <div className="news-ticker-scroll">
-            <a href="#" className="news-ticker-item">
-              <span className="news-ticker-date">15/03</span>
-              <span className="news-ticker-text">Thông báo tuyển sinh trình độ Thạc sĩ đợt 1 năm 2026 – Viện Đào tạo Sau Đại học UFM</span>
-            </a>
-            <span className="news-ticker-sep"></span>
-            <a href="#" className="news-ticker-item">
-              <span className="news-ticker-date">12/03</span>
-              <span className="news-ticker-text">Thông báo tuyển sinh trình độ Tiến sĩ đợt 1 năm 2026 – Chuyên ngành QTKD, TCNH, QLKT</span>
-            </a>
-            <span className="news-ticker-sep"></span>
-            <a href="#" className="news-ticker-item">
-              <span className="news-ticker-date">08/03</span>
-              <span className="news-ticker-text">Lịch bảo vệ Luận văn Thạc sĩ và Luận án Tiến sĩ tháng 4/2026</span>
-            </a>
-            <span className="news-ticker-sep"></span>
-            <a href="#" className="news-ticker-item">
-              <span className="news-ticker-date">05/03</span>
-              <span className="news-ticker-text">Giảm 10% học phí dành cho cựu sinh viên UFM đăng ký học Thạc sĩ đợt 1/2026</span>
-            </a>
-            <span className="news-ticker-sep"></span>
-            {/* duplicate for seamless loop */}
-            <a href="#" className="news-ticker-item">
-              <span className="news-ticker-date">15/03</span>
-              <span className="news-ticker-text">Thông báo tuyển sinh trình độ Thạc sĩ đợt 1 năm 2026 – Viện Đào tạo Sau Đại học UFM</span>
-            </a>
-            <span className="news-ticker-sep"></span>
-            <a href="#" className="news-ticker-item">
-              <span className="news-ticker-date">12/03</span>
-              <span className="news-ticker-text">Thông báo tuyển sinh trình độ Tiến sĩ đợt 1 năm 2026 – Chuyên ngành QTKD, TCNH, QLKT</span>
-            </a>
+      {config?.latestNews?.length > 0 && (
+        <div className="news-ticker">
+          <div className="news-ticker-label">
+            <Megaphone size={18} fill="currentColor" />
+            <span>TIN MỚI</span>
+          </div>
+          <div className="news-ticker-track">
+            <div className="news-ticker-scroll">
+              {config.latestNews.map((news: any, idx: number) => (
+                <div key={idx} style={{ display: 'contents' }}>
+                  <a href={`/news/${news.slug}`} className="news-ticker-item">
+                    <span className="news-ticker-date">
+                      {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : ''}
+                    </span>
+                    <span className="news-ticker-text">{news.title}</span>
+                  </a>
+                  <span className="news-ticker-sep"></span>
+                </div>
+              ))}
+              {/* duplicate for seamless loop */}
+              {config.latestNews.map((news: any, idx: number) => (
+                <div key={`dup-${idx}`} style={{ display: 'contents' }}>
+                  <a href={`/news/${news.slug}`} className="news-ticker-item">
+                    <span className="news-ticker-date">
+                      {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) : ''}
+                    </span>
+                    <span className="news-ticker-text">{news.title}</span>
+                  </a>
+                  <span className="news-ticker-sep"></span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ══════════════  TRA CỨU THÔNG TIN (MINIMAL)  ══════════════ */}
       {/* <section className="qsearch-section">
@@ -303,32 +268,34 @@ export default function HomePage() {
 
 
       {/* ══════════════  UFM HIGHLIGHT (VLU STYLE CLONE)  ══════════════ */}
-      <section className="ufm-highlight-section">
-        <div className="ufm-highlight-wrapper vlu-news-container">
-          <VideoHighlight videoId={activeVideo.videoId} />
+      {activeVideo && (
+        <section className="ufm-highlight-section">
+          <div className="ufm-highlight-wrapper vlu-news-container">
+            <VideoHighlight videoId={activeVideo.videoId} videoUrl={activeVideo.url} />
 
-          <motion.div
-            className="ufm-highlight-content"
-            initial="hidden" whileInView="visible" viewport={{ once: true }}
-            variants={fadeUp} custom={1}
-          >
-            <div className="ufm-highlight-header">
-              <h3 className="ufm-highlight-title">{activeVideo.title}</h3>
-            </div>
-            <div className="ufm-highlight-body">
-              <p className="ufm-highlight-desc">
-                {activeVideo.desc}
-              </p>
-              <a href={activeVideo.linkUrl || '#'} className="ufm-highlight-link">
-                <span className="ufm-highlight-link-text">{activeVideo.linkText}</span>
-                <span className="ufm-highlight-btn">
-                  <ChevronRight size={20} strokeWidth={3} />
-                </span>
-              </a>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+            <motion.div
+              className="ufm-highlight-content"
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={fadeUp} custom={1}
+            >
+              <div className="ufm-highlight-header">
+                <h3 className="ufm-highlight-title">{activeVideo.title}</h3>
+              </div>
+              <div className="ufm-highlight-body">
+                <p className="ufm-highlight-desc">
+                  {activeVideo.desc}
+                </p>
+                <a href={activeVideo.linkUrl || '#'} className="ufm-highlight-link">
+                  <span className="ufm-highlight-link-text">{activeVideo.linkText}</span>
+                  <span className="ufm-highlight-btn">
+                    <ChevronRight size={20} strokeWidth={3} />
+                  </span>
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* ══════════════  ABOUT UFM (REFINED ORIGINAL STYLE)  ══════════════ */}
       <section className="about-ufm-section">
@@ -366,7 +333,7 @@ export default function HomePage() {
                           <Image src={ach.image || '/images/default.jpg'} alt={ach.title} fill sizes="400px" style={{ objectFit: 'cover' }} />
                         </div>
                         <div className="about-ufm-card-overlay"></div>
-                        <div className="about-ufm-card-text lg:text-lg">{ach.title}</div>
+                        <div className="about-ufm-card-text lg:text-lg absolute bottom-0">{ach.title}</div>
                       </CardWrapper>
                     </SwiperSlide>
                   )
@@ -430,37 +397,37 @@ export default function HomePage() {
 
           {/* Top news grid: featured + side */}
           {activeFeaturedNews && (
-          <motion.div
-            className="vlu-news-top"
-            initial="hidden" whileInView="visible" viewport={{ once: true }}
-            variants={fadeUp} custom={1}
-          >
-            {/* Featured Left */}
-            <Link href={`/news/${activeFeaturedNews.slug}`} className="vlu-featured-news">
-              <div className="vlu-featured-img">
-                <Image src={activeFeaturedNews.image} alt={activeFeaturedNews.title} fill sizes="600px" style={{ objectFit: 'cover' }} />
-              </div>
-              <div className="vlu-featured-body">
-                <div className="vlu-featured-tag">{activeFeaturedNews.tag}</div>
-                <h3>{activeFeaturedNews.title}</h3>
-              </div>
-            </Link>
+            <motion.div
+              className="vlu-news-top"
+              initial="hidden" whileInView="visible" viewport={{ once: true }}
+              variants={fadeUp} custom={1}
+            >
+              {/* Featured Left */}
+              <Link href={`/news/${activeFeaturedNews.slug}`} className="vlu-featured-news">
+                <div className="vlu-featured-img">
+                  <Image src={activeFeaturedNews.image} alt={activeFeaturedNews.title} fill sizes="600px" style={{ objectFit: 'cover' }} />
+                </div>
+                <div className="vlu-featured-body">
+                  <div className="vlu-featured-tag">{activeFeaturedNews.tag}</div>
+                  <h3>{activeFeaturedNews.title}</h3>
+                </div>
+              </Link>
 
-            {/* Side Right List */}
-            <div className="vlu-side-news">
-              {activeSideNews.map((item: any, idx: number) => (
-                <Link key={idx} href={`/news/${item.slug}`} className="vlu-side-item">
-                  <div className="vlu-side-img">
-                    <Image src={item.image} alt={item.title} fill sizes="200px" style={{ objectFit: 'cover' }} />
-                  </div>
-                  <div className="vlu-side-text">
-                    {item.tag && <span className="vlu-side-tag">{item.tag}</span>}
-                    <h4>{item.title}</h4>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </motion.div>
+              {/* Side Right List */}
+              <div className="vlu-side-news">
+                {activeSideNews.map((item: any, idx: number) => (
+                  <Link key={idx} href={`/news/${item.slug}`} className="vlu-side-item">
+                    <div className="vlu-side-img">
+                      <Image src={item.image} alt={item.title} fill sizes="200px" style={{ objectFit: 'cover' }} />
+                    </div>
+                    <div className="vlu-side-text">
+                      {item.tag && <span className="vlu-side-tag">{item.tag}</span>}
+                      <h4>{item.title}</h4>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
           )}
 
           {/* Event Cards Grid */}
@@ -609,7 +576,7 @@ export default function HomePage() {
 
       {/* ══════════════  CHATBOT UI  ══════════════ */}
       {showChatbot && <Chatbot />}
-      
+
       {/* ══════════════  GLOBAL POPUP  ══════════════ */}
       <GlobalPopup />
     </>
