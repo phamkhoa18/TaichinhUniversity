@@ -2,12 +2,45 @@
 
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Save, Plus, Trash2, GripVertical, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2, GripVertical, Loader2, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import ImageUpload from '@/components/upload/ImageUpload';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+
+// Helper component
+function SearchableSel({ value, onChange, ph, opts }: any) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" aria-expanded={open} className={cn("w-full h-11 justify-between font-medium rounded-xl bg-slate-50 border-slate-200 text-[14px]", !value && "text-slate-400 font-normal")}>
+          <span className="truncate">{value ? opts.find((opt:any) => opt.v === value)?.l : ph}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 rounded-xl" align="start">
+        <Command>
+          <CommandInput placeholder="Tìm bài viết..." className="h-10 text-[13px]" />
+          <CommandEmpty className="py-3 text-[13px] text-center text-slate-500">Không tìm thấy bài viết nào.</CommandEmpty>
+          <CommandList>
+            <CommandGroup className="max-h-[250px] overflow-auto">
+              {opts.map((opt:any) => (
+                <CommandItem key={opt.v} value={opt.l} onSelect={() => { onChange(opt.v); setOpen(false) }} className="text-[14px] cursor-pointer py-2">
+                  <Check className={cn("mr-2 h-4 w-4 text-[#005496]", value === opt.v ? "opacity-100" : "opacity-0")} />
+                  <span className="truncate">{opt.l}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export default function CMSHomePage() {
   const [data, setData] = useState<any>(null);
@@ -22,9 +55,7 @@ export default function CMSHomePage() {
         if (res.success) {
           setData({
             ...res.data,
-            featuredNewsIds: res.data.featuredNewsIds && res.data.featuredNewsIds.length > 0 
-              ? [...res.data.featuredNewsIds, ...Array(10)].slice(0, 10) 
-              : Array(10).fill('') // Đảm bảo luôn có 10 slot
+            featuredNewsIds: res.data.featuredNewsIds || []
           });
         }
       })
@@ -127,8 +158,7 @@ export default function CMSHomePage() {
           <button onClick={() => setActiveTab('hero')} className={cn("px-4 py-1.5 text-sm font-semibold rounded-md transition-colors", activeTab === 'hero' ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700")}>Hero Banners</button>
           <button onClick={() => setActiveTab('video')} className={cn("px-4 py-1.5 text-sm font-semibold rounded-md transition-colors", activeTab === 'video' ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700")}>Video Highlight</button>
           <button onClick={() => setActiveTab('stats')} className={cn("px-4 py-1.5 text-sm font-semibold rounded-md transition-colors", activeTab === 'stats' ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700")}>Thông số (Stats)</button>
-          <button onClick={() => setActiveTab('achievements')} className={cn("px-4 py-1.5 text-sm font-semibold rounded-md transition-colors", activeTab === 'achievements' ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700")}>Thành tựu (Dự phòng)</button>
-          <button onClick={() => setActiveTab('news')} className={cn("px-4 py-1.5 text-sm font-semibold rounded-md transition-colors", activeTab === 'news' ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700")}>Bài viết "Đôi nét SĐH" (10 thẻ)</button>
+          <button onClick={() => setActiveTab('news')} className={cn("px-4 py-1.5 text-sm font-semibold rounded-md transition-colors", activeTab === 'news' ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700")}>Liên kết Bài viết (Đôi nét SĐH)</button>
         </div>
 
         {/* 1. Hero Banners */}
@@ -260,84 +290,59 @@ export default function CMSHomePage() {
           </div>
         )}
 
-        {/* 4. Achievements (Images cards) */}
-        {activeTab === 'achievements' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <p className="text-sm font-semibold text-slate-700">Hình ảnh và Thành tựu (Các Card ở khu vực "Đôi nét về Viện SĐH")</p>
-              <Button 
-                variant="outline" size="sm" 
-                onClick={() => addArrayItem('achievements', { image: '', title: '', order: 0 })}
-              >
-                <Plus className="w-4 h-4 mr-1" /> Thêm thẻ hình ảnh
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {data.achievements.map((ach: any, idx: number) => (
-                <div key={idx} className="p-4 border border-slate-200 rounded-xl space-y-3 relative group bg-white flex flex-col">
-                  <button 
-                    className="absolute z-10 top-2 right-2 p-1.5 text-slate-400 bg-white hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors opacity-0 group-hover:opacity-100 shadow-sm"
-                    onClick={() => removeArrayItem('achievements', idx)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <div className="w-full">
-                    <ImageUpload value={ach.image} onChange={(url) => updateArrayItem('achievements', idx, 'image', url)} category="images" />
-                  </div>
-                  <div className="space-y-1 mt-2">
-                    <label className="text-xs font-semibold text-slate-500">Nội dung text trên thẻ</label>
-                    <textarea 
-                      value={ach.title} 
-                      onChange={(e: any) => updateArrayItem('achievements', idx, 'title', e.target.value)} 
-                      placeholder="VD: 9 chương trình đạt chuẩn..."
-                      className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* 5. Featured News List */}
         {activeTab === 'news' && (
           <div className="space-y-6">
-            <div className="flex flex-col bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <p className="text-sm font-semibold text-slate-700">Chọn 10 bài viết xuất hiện ở mục "Đôi nét về Viện SĐH"</p>
-              <p className="text-xs text-slate-500 mt-1">Các bài viết sẽ được tự động hiển thị dưới dạng thẻ kéo ngang (Swiper Slider).</p>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div>
+                <p className="text-sm font-semibold text-slate-700">Hình ảnh và Bài viết ở khu vực "Đôi nét về Viện SĐH"</p>
+                <p className="text-[13px] text-slate-500 mt-0.5">Các bài viết sẽ hiển thị dưới dạng thẻ kéo ngang (Swiper Slider). Thêm bao nhiêu tùy ý.</p>
+              </div>
+              <Button 
+                onClick={() => setData((prev: any) => ({ ...prev, featuredNewsIds: [...(prev.featuredNewsIds || []), ''] }))}
+                className="bg-[#005496] hover:bg-[#004882] text-white shrink-0"
+                size="sm"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> Thêm thẻ bài viết
+              </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Array.from({ length: 10 }).map((_, idx) => {
-                const currentVal = data.featuredNewsIds?.[idx]?._id || data.featuredNewsIds?.[idx] || '';
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {(data.featuredNewsIds || []).map((newsItem: any, idx: number) => {
+                const currentVal = newsItem?._id || newsItem || '';
                 
                 return (
-                  <div key={idx} className="p-4 border border-slate-200 rounded-xl space-y-3 bg-white">
-                    <label className="text-xs font-semibold text-slate-700">
-                      Bài viết thẻ ngang #{idx + 1}
-                    </label>
-                    <Select 
-                      value={currentVal} 
-                      onValueChange={(val) => {
+                  <div key={idx} className="p-5 border border-slate-200 rounded-xl space-y-4 bg-white relative group shadow-sm hover:border-[#005496]/30 transition-all">
+                    <button 
+                      className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                      onClick={() => {
                         setData((prev: any) => {
-                          const arr = [...(prev.featuredNewsIds || Array(10).fill(''))];
-                          arr[idx] = val;
+                          const arr = [...(prev.featuredNewsIds || [])];
+                          arr.splice(idx, 1);
                           return { ...prev, featuredNewsIds: arr };
                         });
                       }}
                     >
-                      <SelectTrigger className="w-full h-10 bg-slate-50 border-slate-200">
-                        <SelectValue placeholder="--- Chọn bài viết ---" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {newsOptions.map(n => (
-                          <SelectItem key={n._id} value={n._id}>
-                            [{n.tag || n.category?.name || 'TIN TỨC'}] {n.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center gap-2 mb-2 text-slate-700 font-bold border-b border-slate-100 pb-2">
+                       <span className="w-6 h-6 rounded-md bg-[#005496]/10 text-[#005496] flex items-center justify-center text-[12px]">{idx + 1}</span> 
+                       <span className="text-[14px]">Liên kết Thẻ Bài Viết</span>
+                    </div>
+                    <div className="space-y-1.5 mt-2">
+                      <SearchableSel
+                        value={currentVal}
+                        onChange={(val: any) => {
+                          setData((prev: any) => {
+                            const arr = [...(prev.featuredNewsIds || [])];
+                            arr[idx] = val;
+                            return { ...prev, featuredNewsIds: arr };
+                          });
+                        }}
+                        ph="--- Chọn bài viết tìm kiếm ---"
+                        opts={newsOptions.map(n => ({ v: n._id, l: `[${n.tag || n.category?.name || 'TIN TỨC'}] ${n.title}` }))}
+                      />
+                    </div>
                   </div>
                 );
               })}
