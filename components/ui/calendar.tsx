@@ -23,7 +23,7 @@ function Calendar({
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
 }) {
-  const defaultClassNames = getDefaultClassNames()
+  const defaultClassNames = getDefaultClassNames() as Record<string, string>
 
   return (
     <DayPicker
@@ -178,7 +178,7 @@ function CalendarDayButton({
   modifiers,
   ...props
 }: React.ComponentProps<typeof DayButton>) {
-  const defaultClassNames = getDefaultClassNames()
+  const defaultClassNames = getDefaultClassNames() as Record<string, string>
 
   const ref = React.useRef<HTMLButtonElement>(null)
   React.useEffect(() => {
