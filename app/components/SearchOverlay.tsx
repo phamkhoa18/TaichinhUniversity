@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, X, ArrowRight, Clock, TrendingUp,
   GraduationCap, BookOpen, Briefcase, FileText,
-  ChevronRight
+  ChevronRight, Loader2
 } from 'lucide-react';
 
 /* ── Suggested searches ── */
@@ -74,7 +74,37 @@ interface SearchOverlayProps {
 
 export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<{title: string, category: string, href: string}[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/public/search?q=${encodeURIComponent(query)}`);
+        const json = await res.json();
+        if (json.success) {
+          setResults(json.data);
+        } else {
+          setResults([]);
+        }
+      } catch (error) {
+        console.error('Search fetch error:', error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     if (isOpen) {
@@ -83,6 +113,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     } else {
       document.body.style.overflow = '';
       setQuery('');
+      setResults([]);
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
@@ -94,10 +125,6 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
-
-  const results = query.trim().length > 0
-    ? ALL_RESULTS.filter(r => r.title.toLowerCase().includes(query.toLowerCase()))
-    : [];
 
   const handleSelect = useCallback(() => {
     onClose();
@@ -175,6 +202,12 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 </div>
               </div>
             </>
+          ) : isLoading ? (
+            /* Loading state */
+            <div className="search-no-results">
+              <Loader2 className="animate-spin" size={48} />
+              <h3>Đang tìm kiếm...</h3>
+            </div>
           ) : results.length > 0 ? (
             /* Results */
             <div className="search-section">

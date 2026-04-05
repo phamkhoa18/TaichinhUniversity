@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import TeamSection from '@/app/components/TeamSection';
-import CourseRegistrationForm from '@/app/components/CourseRegistrationForm';
+import ConsultationSection from '@/app/components/ConsultationSection';
 import { Download, Printer, ZoomIn, ZoomOut, FileText, Maximize2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import connectToDatabase from '@/lib/db/mongodb';
@@ -14,8 +14,8 @@ export const revalidate = 60; // Revalidate every minute
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   await connectToDatabase();
   const { slug } = await params;
-  
-  const program = await TrainingProgram.findOne({ 
+
+  const program = await TrainingProgram.findOne({
     slug,
     status: 'PUBLISHED'
   }).lean();
@@ -61,8 +61,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function TrainingProgramDetail({ params }: { params: Promise<{ slug: string }> }) {
   await connectToDatabase();
   const { slug } = await params;
-  
-  const program = await TrainingProgram.findOne({ 
+
+  const program = await TrainingProgram.findOne({
     slug,
     status: 'PUBLISHED'
   }).lean();
@@ -150,11 +150,11 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
                   <h3 className="font-semibold text-[12px] text-slate-400 uppercase tracking-widest mb-1">Thời gian</h3>
                   <p className="text-slate-800 font-bold text-xl">{program.duration || '---'}</p>
                 </div>
-                
+
                 {/* Notice text */}
-                 <div className="p-4 md:p-5 bg-gradient-to-br from-slate-50 to-[#005496]/5 rounded-xl border border-[#005496]/10 hover:shadow-lg transition-all duration-300 flex items-center">
-                    <p className="text-[13px] text-slate-500 italic">Áp dụng hệ đào tạo {program.type}</p>
-                 </div>
+                <div className="p-4 md:p-5 bg-gradient-to-br from-slate-50 to-[#005496]/5 rounded-xl border border-[#005496]/10 hover:shadow-lg transition-all duration-300 flex items-center">
+                  <p className="text-[13px] text-slate-500 italic">Áp dụng hệ đào tạo {program.type}</p>
+                </div>
               </div>
             </div>
 
@@ -336,7 +336,7 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
                 Cấu trúc chương<br /> trình học
               </h2>
               {program.curriculumDesc ? (
-                <div 
+                <div
                   className="text-white/90 text-[15px] leading-relaxed pr-4 prose prose-invert prose-p:mb-2 prose-a:text-[#ffd200] max-w-none jodit-content-render"
                   dangerouslySetInnerHTML={{ __html: program.curriculumDesc }}
                 />
@@ -372,10 +372,10 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
                   {program.curriculumPdfUrl ? (
                     <iframe src={program.curriculumPdfUrl} className="w-full h-full border-0 absolute inset-0" title="PDF Viewer" />
                   ) : (
-                     <div className="flex flex-col items-center justify-center p-10 h-full text-center">
-                       <FileText className="w-12 h-12 text-slate-400 mb-4" />
-                       <p className="text-slate-500 font-bold">Chưa cập nhật tài liệu học phần</p>
-                     </div>
+                    <div className="flex flex-col items-center justify-center p-10 h-full text-center">
+                      <FileText className="w-12 h-12 text-slate-400 mb-4" />
+                      <p className="text-slate-500 font-bold">Chưa cập nhật tài liệu học phần</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -384,12 +384,12 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
         </div>
       </section>
 
-      <TeamSection />
+      {/* <TeamSection /> */}
 
       {/* ──────────────────────────────────
           7. LIÊN HỆ TƯ VẤN (FORM)
       ────────────────────────────────── */}
-      <CourseRegistrationForm />
+      <ConsultationSection />
 
       <Footer />
     </div>
