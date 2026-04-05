@@ -92,7 +92,9 @@ export default function PdfViewerClient({ url, fileName }: PdfViewerProps) {
     // Dynamic import react-pdf chỉ ở client
     import('react-pdf').then((mod) => {
       // CSS imports
+      // @ts-ignore - Ignore missing CSS module types from react-pdf
       import('react-pdf/dist/Page/AnnotationLayer.css');
+      // @ts-ignore - Ignore missing CSS module types from react-pdf
       import('react-pdf/dist/Page/TextLayer.css');
       
       mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`;
