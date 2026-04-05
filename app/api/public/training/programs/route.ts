@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       id: p._id.toString(),
       slug: p.slug,
       name: p.name,
-      level: p.level?.name || 'Vô danh',
+      level: (p.level as any)?.name || 'Vô danh',
       faculty: p.faculty || 'Viện Sau đại học',
       degree: p.degreeIssued || p.name,
       type: p.type || 'Tiêu chuẩn',
