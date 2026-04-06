@@ -34,12 +34,11 @@ const shortCourseRegistrationSchema = new Schema<IShortCourseRegistration>(
 )
 
 // Auto-generate registration code before save
-shortCourseRegistrationSchema.pre('save', async function (next) {
+shortCourseRegistrationSchema.pre('save', async function () {
   if (!this.registrationCode) {
     const count = await mongoose.model('ShortCourseRegistration').countDocuments()
     this.registrationCode = `DTNH${String(count + 1).padStart(4, '0')}`
   }
-  next()
 })
 
 if (mongoose.models.ShortCourseRegistration) {
