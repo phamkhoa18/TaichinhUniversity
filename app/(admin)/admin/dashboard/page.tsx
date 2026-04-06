@@ -45,6 +45,7 @@ export default async function DashboardPage() {
     Applicant.countDocuments({ status: 'PENDING' }),
     TrainingProgram.countDocuments({ status: 'PUBLISHED' }),
     ShortCourse.countDocuments({ status: 'DRAFT' }), // Hoặc active
+    News.countDocuments({ status: 'DRAFT' }),
   ])
 
   // 2. Fetch Chart Data (Admissions by month for current year)
