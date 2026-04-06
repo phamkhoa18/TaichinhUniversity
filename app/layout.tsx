@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SiteSettingsProvider } from "@/store/SiteSettingsProvider";
+import GlobalChatbotWrapper from "@/app/components/GlobalChatbotWrapper";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body>
         <SiteSettingsProvider>
           {children}
+          <GlobalChatbotWrapper />
         </SiteSettingsProvider>
         <Toaster
           position="top-right"

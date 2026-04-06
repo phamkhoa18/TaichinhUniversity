@@ -56,19 +56,13 @@ export const ADMIN_NAV: NavItem[] = [
     href: '/admin/dao-tao-ngan-han',
     icon: 'BookMarked',
     permission: 'program:read',
+    children: [
+      { label: 'Danh sách khóa học', href: '/admin/dao-tao-ngan-han', icon: 'List', permission: 'program:read' },
+      { label: 'Tạo khóa mới', href: '/admin/dao-tao-ngan-han/tao-moi', icon: 'PenSquare', permission: 'program:read' },
+      { label: 'Quản lý đăng ký', href: '/admin/dao-tao-ngan-han/dang-ky', icon: 'Users', permission: 'program:read' },
+    ],
   },
-  {
-    label: 'Văn bản - Tài liệu',
-    href: '/admin/van-ban',
-    icon: 'FileText',
-    permission: 'document:read',
-  },
-  {
-    label: 'Thời khóa biểu',
-    href: '/admin/thoi-khoa-bieu',
-    icon: 'CalendarDays',
-    permission: 'program:read',
-  },
+
   {
     label: 'Quản lý Menu',
     href: '/admin/menu',
@@ -86,14 +80,15 @@ export const ADMIN_NAV: NavItem[] = [
     href: '/admin/ai-chatbot',
     icon: 'Bot',
     permission: 'news:edit',
-    badge: 'Mới',
   },
   {
-    label: 'Upload Manager',
-    href: '/admin/upload-manager',
-    icon: 'Upload',
-    permission: 'upload:manage',
+    label: 'Khách hàng tiềm năng',
+    href: '/admin/khach-hang-tiem-nang',
+    icon: 'Contact',
+    permission: 'admission:read',
+    badge: 'CRM',
   },
+
   {
     label: 'Người dùng',
     href: '/admin/nguoi-dung',

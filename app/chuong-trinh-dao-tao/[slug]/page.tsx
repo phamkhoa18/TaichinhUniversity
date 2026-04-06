@@ -65,7 +65,7 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
   const program = await TrainingProgram.findOne({
     slug,
     status: 'PUBLISHED'
-  }).lean();
+  }).populate('level', 'name').lean() as any;
 
   if (!program) {
     notFound();
@@ -79,102 +79,111 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
       <Header />
 
       {/* ──────────────────────────────────
-          1. FULL SCREEN HERO SECTION 
+          1. HERO BANNER — Compact & Refined
       ────────────────────────────────── */}
-      <section className="relative w-full h-[85vh] min-h-[600px] flex flex-col justify-end">
+      <section className="relative w-full h-[60vh] min-h-[450px] flex flex-col justify-end">
         <div className="absolute inset-0 z-0">
           <img
             src={program.heroBg || bgImgDefault}
             alt="Hero Background"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          <div className="absolute inset-0 bg-[#002f54]/20 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#001024]/90 via-[#001024]/35 to-[#001024]/10" />
+          <div className="absolute inset-0 bg-[#002f54]/15 mix-blend-multiply" />
         </div>
 
-        <div className="vlu-news-container mx-auto lg:px-0 md:max-w-[70%] z-10 pb-20 ml-0 md:ml-[10%] px-4">
-          <h1 className="text-5xl md:text-[60px] font-bold text-white mb-6 leading-tight drop-shadow-md">
+        <div className="vlu-news-container mx-auto lg:px-0 md:max-w-[70%] z-10 pb-16 ml-0 md:ml-[10%] px-4">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/15 px-4 py-1.5 rounded-full mb-5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ffd200] animate-pulse"></span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/90">{program.level?.name || program.level || 'Chương trình đào tạo'}</span>
+          </div>
+          <h1 className="text-4xl md:text-[52px] font-extrabold text-white mb-4 leading-[1.1] drop-shadow-lg tracking-tight">
             {program.name}
           </h1>
-          <p className="text-white text-[17px] md:text-[20px] font-light leading-relaxed drop-shadow-md">
+          <p className="text-white/80 text-[16px] md:text-[18px] font-light leading-relaxed max-w-2xl">
             {program.heroDescription || "Khoa tự hào khi là một trong những khoa lớn, có sức hút với tính chất đặc thù trong chương trình đào tạo..."}
           </p>
+        </div>
+
+        {/* Wave divider */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-10 pointer-events-none transform translate-y-px">
+          <svg className="relative block w-[calc(100%+1.3px)] h-[30px] md:h-[40px]" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118.06,155.67,122.2,208,103.54,231.25,95.14,277.62,64.29,321.39,56.44Z" className="fill-white"></path>
+          </svg>
         </div>
       </section>
 
       {/* ──────────────────────────────────
-          2. GIỚI THIỆU CHUNG
+          2. GIỚI THIỆU CHUNG — Refined
       ────────────────────────────────── */}
-      <section className="py-20 bg-white relative">
-        <div className="absolute top-0 right-0 w-[45%] h-[80%] bg-slate-50/70 -z-10 rounded-bl-[120px]"></div>
+      <section className="py-16 bg-white relative">
+        <div className="absolute top-0 right-0 w-[40%] h-[75%] bg-gradient-to-bl from-slate-50/80 to-transparent -z-10 rounded-bl-[80px]"></div>
 
         <div className="vlu-news-container mx-auto px-4 md:px-8 max-w-[1200px]">
-          <div className="flex flex-col lg:flex-row gap-8 lg:gap-20 items-center">
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-center">
 
             <div className="lg:w-[55%]">
-              <h2 className="text-[40px] md:text-[46px] font-bold mb-6 text-slate-800 leading-[1.15]">
-                Giới thiệu <span className="text-[#005496] font-light">chung</span>
+              <h2 className="text-[32px] md:text-[38px] font-bold mb-4 text-slate-800 leading-[1.15]">
+                Giới thiệu <span className="text-[#005496]">chung</span>
               </h2>
-              <div className="w-20 h-1.5 bg-[#e9202a] mb-8"></div>
-              <p className="text-[17px] text-slate-600 leading-relaxed mb-12 font-normal pr-4 whitespace-pre-wrap">
+              <div className="w-16 h-1 bg-gradient-to-r from-[#e9202a] to-[#005496] mb-6 rounded-full"></div>
+              <p className="text-[15px] text-slate-600 leading-[1.8] mb-8 font-normal pr-4 whitespace-pre-wrap">
                 {program.overviewDesc || "Đang cập nhật giới thiệu..."}
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Info Card 1 */}
-                <div className="p-4 md:p-5 bg-slate-50 rounded-xl border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
-                  <div className="text-[#e9202a] mb-3 bg-white w-10 h-10 rounded-full flex items-center justify-center shadow-sm">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><line x1="8" y1="11" x2="8" y2="11"></line><line x1="8" y1="15" x2="8" y2="15"></line><line x1="12" y1="11" x2="16" y2="11"></line><line x1="12" y1="15" x2="16" y2="15"></line></svg>
-                  </div>
-                  <h3 className="font-semibold text-[12px] text-slate-400 uppercase tracking-widest mb-1">Mã Ngành</h3>
-                  <p className="text-[#005496] font-bold text-xl group-hover:text-[#e9202a] transition-colors">{program.programCode || '---'}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Info Card 1 — Mã Ngành */}
+                <div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group border-l-[3px] border-l-[#005496]">
+                  <h3 className="font-bold text-[10px] text-slate-400 uppercase tracking-[0.12em] mb-1">Mã Ngành</h3>
+                  <p className="text-[#005496] font-extrabold text-lg group-hover:text-[#e9202a] transition-colors leading-tight">{program.programCode || '---'}</p>
                 </div>
 
-                {/* Info Card 2 */}
-                <div className="p-4 md:p-5 bg-slate-50 rounded-xl border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group relative overflow-hidden">
-                  <div className="absolute -right-6 -bottom-6 text-slate-200/50 group-hover:text-[#005496]/10 transition-colors duration-500">
-                    <svg width="80" height="80" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72M12 12M5 14.54" /></svg>
-                  </div>
-                  <div className="text-[#005496] mb-3 bg-white w-10 h-10 rounded-full flex items-center justify-center shadow-sm relative z-10">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-                  </div>
-                  <h3 className="font-semibold text-[12px] text-slate-400 uppercase tracking-widest mb-1 relative z-10">Văn Bằng</h3>
-                  <p className="text-slate-800 font-bold text-[18px] leading-tight relative z-10">{program.degreeIssued || program.name}</p>
+                {/* Info Card 2 — Văn Bằng */}
+                <div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group border-l-[3px] border-l-[#e9202a]">
+                  <h3 className="font-bold text-[10px] text-slate-400 uppercase tracking-[0.12em] mb-1">Văn Bằng</h3>
+                  <p className="text-slate-800 font-extrabold text-[15px] leading-tight">{program.degreeIssued || program.name}</p>
                 </div>
 
-                {/* Info Card 3 */}
-                <div className="p-4 md:p-5 bg-slate-50 rounded-xl border border-slate-100 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group">
-                  <div className="text-[#e9202a] mb-3 bg-white w-10 h-10 rounded-full flex items-center justify-center shadow-sm">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                  </div>
-                  <h3 className="font-semibold text-[12px] text-slate-400 uppercase tracking-widest mb-1">Thời gian</h3>
-                  <p className="text-slate-800 font-bold text-xl">{program.duration || '---'}</p>
+                {/* Info Card 3 — Thời gian */}
+                <div className="p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group border-l-[3px] border-l-[#ffd200]">
+                  <h3 className="font-bold text-[10px] text-slate-400 uppercase tracking-[0.12em] mb-1">Thời gian</h3>
+                  <p className="text-slate-800 font-extrabold text-lg leading-tight">{program.duration || '---'}</p>
                 </div>
+              </div>
 
-                {/* Notice text */}
-                <div className="p-4 md:p-5 bg-gradient-to-br from-slate-50 to-[#005496]/5 rounded-xl border border-[#005496]/10 hover:shadow-lg transition-all duration-300 flex items-center">
-                  <p className="text-[13px] text-slate-500 italic">Áp dụng hệ đào tạo {program.type}</p>
-                </div>
+              <div className="mt-3 px-4 py-2.5 bg-gradient-to-r from-[#005496]/[0.04] to-transparent rounded-lg border-l-[3px] border-l-[#005496]/30">
+                <p className="text-[12px] text-slate-500 font-medium">Áp dụng hệ đào tạo <span className="text-[#005496] font-bold">{program.type}</span></p>
               </div>
             </div>
 
             <div className="lg:w-[45%] relative hidden md:block">
-              <div className="relative h-[600px] flex items-center justify-center">
-                <div className="absolute top-4 right-0 w-[80%] h-[75%] rounded-3xl overflow-hidden shadow-2xl z-10">
+              <div className="relative h-[450px] flex items-center justify-center">
+                {/* Decorative dot pattern */}
+                <div className="absolute -top-3 -right-3 w-20 h-20 opacity-[0.05] z-0"
+                  style={{ backgroundImage: 'radial-gradient(circle, #005496 1.5px, transparent 1.5px)', backgroundSize: '8px 8px' }}></div>
+
+                <div className="absolute top-0 right-0 w-[82%] h-[72%] rounded-2xl overflow-hidden shadow-2xl z-10 group">
                   <img
                     src={program.overviewImgMain || "https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1200&auto=format&fit=crop"}
                     alt="Overview"
-                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-1000"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-[#005496]/20 to-transparent mix-blend-multiply"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#005496]/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </div>
 
-                <div className="absolute bottom-10 left-0 w-[55%] h-[40%] rounded-2xl overflow-hidden shadow-2xl z-20 border-[6px] border-white group">
+                <div className="absolute bottom-4 left-0 w-[52%] h-[42%] rounded-xl overflow-hidden shadow-2xl z-20 border-4 border-white group">
                   <img
                     src={program.overviewImgSub || "https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop"}
                     alt="Overview Sub"
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                   />
+                </div>
+
+                {/* Floating accent badge */}
+                <div className="absolute bottom-0 right-4 bg-[#005496] text-white rounded-xl px-4 py-2.5 z-30 shadow-lg shadow-[#005496]/25 flex items-center gap-2">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                  <span className="text-[12px] font-bold">Chất lượng cao</span>
                 </div>
               </div>
             </div>
@@ -217,7 +226,7 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
       )}
 
       {program.featureCards && program.featureCards.length > 0 ? (
-        <div className="h-20 md:h-52 bg-white w-full"></div>
+        <div className="h-20 md:h-24 bg-white w-full"></div>
       ) : null}
 
       {/* ──────────────────────────────────
@@ -302,9 +311,9 @@ export default async function TrainingProgramDetail({ params }: { params: Promis
                     <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-4 text-white transform group-hover:-translate-y-2 transition-transform duration-500">
                       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                     </div>
-                    <h3 className="text-white font-bold text-[24px] whitespace-nowrap mb-0 group-hover:mb-3 transition-all duration-500">{career.title}</h3>
+                    <h3 className="text-white font-bold text-[20px] md:text-[24px] leading-tight mb-0 group-hover:mb-3 transition-all duration-500 break-words">{career.title}</h3>
                     <div className="max-h-0 opacity-0 group-hover:max-h-[120px] group-hover:opacity-100 transition-all duration-700 overflow-hidden ease-in-out">
-                      <p className="text-white/90 text-[15px] leading-relaxed max-w-[280px] whitespace-pre-wrap">
+                      <p className="text-white/90 text-[14px] leading-relaxed w-full break-words whitespace-pre-wrap">
                         {career.desc}
                       </p>
                     </div>

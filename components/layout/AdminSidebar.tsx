@@ -9,6 +9,7 @@ import { ADMIN_NAV, NavItem } from '@/constants/adminNav'
 import { hasPermission } from '@/lib/auth/permissions'
 import * as Icons from 'lucide-react'
 import { Role } from '@/types/auth'
+import { useNotifications } from './NotificationProvider'
 
 interface AdminSidebarProps {
   userRole: Role
@@ -26,6 +27,9 @@ const Icon = ({ name, ...rest }: { name: string; [key: string]: any }) => {
 export default function AdminSidebar({ userRole, onCloseMobile, isCollapsed = false, onToggleCollapse }: AdminSidebarProps) {
   const pathname = usePathname()
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({})
+  const { badges } = useNotifications()
+
+  const getBadgeCount = (href: string) => badges[href] || 0
 
   // Lọc menu theo quyền hạn thực tế
   const filteredNav = ADMIN_NAV.filter((item) => {
@@ -110,6 +114,13 @@ export default function AdminSidebar({ userRole, onCloseMobile, isCollapsed = fa
                       />
                       <span className={`${isActive ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
                     </div>
+                    <div className="flex items-center gap-1.5">
+                      {getBadgeCount(item.href) > 0 && (
+                        <span className="min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold bg-rose-500 text-white rounded-full leading-none animate-in zoom-in duration-300">
+                          {getBadgeCount(item.href)}
+                        </span>
+                      )}
+                    </div>
                     <Icons.ChevronDown 
                       className={`w-3.5 h-3.5 transition-transform duration-200 ${
                         isOpen ? 'rotate-180 text-[#005496]' : 'text-slate-400 group-hover:text-[#005496]/80'
@@ -157,7 +168,7 @@ export default function AdminSidebar({ userRole, onCloseMobile, isCollapsed = fa
                   href={item.href}
                   onClick={handleLinkClick}
                   title={isCollapsed ? item.label : undefined}
-                  className={`flex items-center gap-2.5 rounded-lg transition-all group text-[14px] ${
+                  className={`flex items-center gap-2.5 rounded-lg transition-all group text-[14px] relative ${
                     isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2'
                   } ${
                     isActive 
@@ -176,6 +187,16 @@ export default function AdminSidebar({ userRole, onCloseMobile, isCollapsed = fa
                   )}
                   {!isCollapsed && item.badge && (
                     <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[#005496] text-white rounded-md leading-none">{item.badge}</span>
+                  )}
+                  {!isCollapsed && getBadgeCount(item.href) > 0 && (
+                    <span className="min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-bold bg-rose-500 text-white rounded-full leading-none animate-in zoom-in duration-300">
+                      {getBadgeCount(item.href)}
+                    </span>
+                  )}
+                  {isCollapsed && getBadgeCount(item.href) > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center px-0.5 text-[8px] font-bold bg-rose-500 text-white rounded-full leading-none">
+                      {getBadgeCount(item.href)}
+                    </span>
                   )}
                 </Link>
               )}

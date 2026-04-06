@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

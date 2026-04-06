@@ -23,49 +23,7 @@ const QUICK_LINKS = [
   { icon: <FileText size={16} />, label: 'Quy chế đào tạo', href: '/news' },
 ];
 
-/* ── Mock search results ── */
-const ALL_RESULTS = [
-  {
-    title: 'Thông báo tuyển sinh trình độ Thạc sĩ đợt 1 năm 2026',
-    category: 'Tuyển sinh',
-    href: '/news/tuyen-sinh-thac-si-dot-1-2026',
-  },
-  {
-    title: 'Thông báo tuyển sinh trình độ Tiến sĩ đợt 1 năm 2026',
-    category: 'Tuyển sinh',
-    href: '/news/tuyen-sinh-tien-si-2026',
-  },
-  {
-    title: 'Chương trình Thạc sĩ Tài chính – Ngân hàng',
-    category: 'Đào tạo',
-    href: '/dao-tao/thac-si/tai-chinh-ngan-hang',
-  },
-  {
-    title: 'Chương trình Thạc sĩ Quản trị Kinh doanh',
-    category: 'Đào tạo',
-    href: '/news',
-  },
-  {
-    title: 'Giảm 10% học phí cho cựu sinh viên UFM',
-    category: 'Chính sách',
-    href: '/news/uu-dai-hoc-phi-cuu-sv',
-  },
-  {
-    title: 'Hội thảo khoa học quốc tế Fintech, AI và Tài chính bền vững',
-    category: 'Sự kiện',
-    href: '/news/hoi-thao-fintech-ai-2026',
-  },
-  {
-    title: 'Lịch bảo vệ Luận văn Thạc sĩ và Luận án Tiến sĩ tháng 4/2026',
-    category: 'Học thuật',
-    href: '/news',
-  },
-  {
-    title: 'Discovery Day 2026 – Trải nghiệm không gian học tập',
-    category: 'Sự kiện',
-    href: '/news/discovery-day-2026',
-  },
-];
+
 
 interface SearchOverlayProps {
   isOpen: boolean;

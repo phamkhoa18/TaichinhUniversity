@@ -9,11 +9,12 @@ import remarkGfm from 'remark-gfm';
 import {
   Send, Mic, MicOff, Plus, Bot, User, ArrowLeft,
   GraduationCap, BookOpen, HelpCircle, Calendar,
-  Lightbulb, Monitor, Loader2, Copy,
+  Lightbulb, Monitor, Loader2, Copy, PowerSquare,
   Check, ThumbsUp, ThumbsDown,
-  ChevronDown, ExternalLink, Mail,
+  ChevronDown, ExternalLink, Mail, UserCircle2, Phone,
   Shield, FileSearch, Brain, Sparkles, Search, Database, Zap
 } from 'lucide-react';
+import { showToast } from '@/lib/toast';
 
 /* ═══════════════════════════════════════
    Types
@@ -55,6 +56,7 @@ const TEXT_COLOR = 'lab(6.02612% -1.05058 -4.10174)';
 
 const FASTAPI_CHAT_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'https://chatbot-ufm-api.vincode.xyz';
 
+console.log(FASTAPI_CHAT_URL);
 /* ═══════════════════════════════════════
    Markdown component overrides (ChatGPT-style)
    ═══════════════════════════════════════ */
@@ -87,14 +89,14 @@ const markdownComponents: Components = {
 
     if (isEmail) {
       return (
-        <a href={finalHref} className="inline-flex items-center gap-1 text-[#0284c7] font-semibold hover:text-[#005496] underline underline-offset-2 decoration-[#0284c7]/40 hover:decoration-[#005496]/60 transition-colors">
+        <a href={finalHref} className="inline-flex items-center gap-1 font-semibold hover:opacity-80 transition-opacity break-words" style={{ color: '#3578E5', textDecoration: 'underline' }}>
           <Mail size={12} className="flex-shrink-0 opacity-70" />
           {children}
         </a>
       );
     }
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#0284c7] font-medium hover:text-[#005496] underline underline-offset-2 decoration-[#0284c7]/30 hover:decoration-[#005496]/50 transition-colors">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold hover:opacity-80 transition-opacity break-words" style={{ color: '#3578E5', textDecoration: 'underline' }}>
         {children}
       </a>
     );
@@ -253,60 +255,83 @@ function enhanceContent(raw: string): string {
 function BotContent({ content }: { content: string }) {
   let text = enhanceContent(content);
 
-  // Convert [Nguồn: xxx](url) → [↗](url "xxx")  (clickable link with tooltip)
-  // Convert [Nguồn: xxx] → remove entirely (no URL = just strip it)
-  // Convert [Nguồn N — xxx](url) → [↗](url "xxx")
+  // Mảng chứa các nguồn tài liệu bóc từ markdown
+  const documentSources: Array<{label: string, url: string}> = [];
+  
+  // Regex tìm dòng "Nguồn tài liệu: [Label](url)" hoặc "Nguồn tài liệu tham khảo: [Label](url)"
+  const sourceRegex = /Nguồn tài liệu(?: tham khảo)?:\s*\[(.*?)\]\((.*?)\)/gi;
+  
+  text = text.replace(sourceRegex, (match, label, url) => {
+    const finalUrl = url.trim().startsWith('/view-document') 
+      ? `${FASTAPI_CHAT_URL}${url.trim()}` 
+      : url.trim();
+    documentSources.push({ label: label.trim(), url: finalUrl });
+    return ''; // Xóa khỏi text chính
+  });
+
+  // Convert [Nguồn: xxx](url) → [Nguồn: xxx](url) (những nguồn inline)
   text = text.replace(
     /\[Nguồn(?:\s*\d*)?(?:\s*[—:–]\s*)?([^\]]+)\](?:\(([^)]+)\))?/g,
-    (_match, label: string, url?: string) => {
+    (match, label: string, url?: string) => {
       if (url) {
-        return `[↗](${url} "${label.trim()}")`;
+        const finalUrl = url.trim().startsWith('/view-document') 
+          ? `${FASTAPI_CHAT_URL}${url.trim()}` 
+          : url.trim();
+        return `[Nguồn: ${label.trim()}](${finalUrl})`;
       }
-      // No URL → strip entirely to avoid visual noise
-      return '';
+      return match;
     }
   );
+  
+  // 1. Remove Nguồn tài liệu block followed by raw .md/.txt files
+  text = text.replace(/Nguồn tài liệu(?: tham khảo)?\s*:?[\s\n]*([\w_-]+\.(?:md|txt)[\s\n]*)+/gi, '');
+  
+  // 2. Remove any remaining raw internal file lines (e.g. thong_tin.md)
+  text = text.replace(/^.*[\w_-]+\.(?:md|txt).*$/gm, '');
 
-  // Custom components that handle the ↗ source links
+  // 3. Remove lingering "Nguồn tài liệu:" headers if they got orphaned
+  text = text.replace(/Nguồn tài liệu(?: tham khảo)?\s*:?[\s\n]*$/gi, '');
+
+  text = text.trim();
+
+  // Custom components
   const components: Components = {
     ...markdownComponents,
-    a: ({ href, children, title, ...props }) => {
-      const text = typeof children === 'string' ? children : '';
-      const isEmail = href?.startsWith('mailto:') || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
-      const finalHref = isEmail && !href?.startsWith('mailto:') ? `mailto:${text}` : href;
-
-      // Source reference link (↗ character)
-      if (text === '↗' && href) {
-        return (
-          <a href={href} target="_blank" rel="noopener noreferrer" title={title || ''} className="no-underline inline">
-            <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full bg-[#eff6ff] border border-[#bfdbfe] text-[#3b82f6] hover:bg-[#dbeafe] hover:text-[#2563eb] transition-all cursor-pointer align-middle mx-[2px] -mt-[1px]">
-              <ExternalLink size={8} />
-            </span>
-          </a>
-        );
-      }
-
-      if (isEmail) {
-        return (
-          <a href={finalHref} className="inline-flex items-center gap-1 text-[#0284c7] font-semibold hover:text-[#005496] underline underline-offset-2 decoration-[#0284c7]/40 hover:decoration-[#005496]/60 transition-colors">
-            <Mail size={12} className="flex-shrink-0 opacity-70" />
-            {children}
-          </a>
-        );
-      }
-      return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#0284c7] font-medium hover:text-[#005496] underline underline-offset-2 decoration-[#0284c7]/30 hover:decoration-[#005496]/50 transition-colors">
-          {children}
-        </a>
-      );
-    },
   };
 
   return (
-    <div className="chat-markdown">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-        {text}
-      </ReactMarkdown>
+    <div className="flex flex-col gap-1">
+      <div className="chat-markdown">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+          {text}
+        </ReactMarkdown>
+      </div>
+      
+      {documentSources.length > 0 && (
+        <div className="mt-1 pt-2 border-t border-[#3578E5]/10 flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold text-[#005496] flex items-center gap-1">
+            <Database size={11} />
+            Nguồn tài liệu tham khảo:
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {documentSources.map((src, i) => {
+              const isExternal = src.url.startsWith('http');
+              return (
+                <a
+                  key={i}
+                  href={src.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-[#f0f7ff] hover:bg-[#e0efff] text-[#005496] text-[11px] rounded-md transition-colors border border-[#005496]/20"
+                >
+                  <FileSearch size={11} className="flex-shrink-0" />
+                  <span className="max-w-[250px] truncate">{src.label}</span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -347,8 +372,8 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         {/* Message bubble — synced colors with Chatbot widget */}
         <div
           className={`text-[14px] md:text-[15px] leading-[1.75] md:leading-[1.8] ${isBot
-              ? 'px-1 py-0.5'  /* ChatGPT-style: no visible bubble for bot */
-              : 'px-4 py-3 md:px-5 md:py-3.5 bg-[#3578E5] text-white rounded-[18px] rounded-br-[6px] shadow-[0_1px_4px_rgba(53,120,229,0.25)]'
+            ? 'px-1 py-0.5'  /* ChatGPT-style: no visible bubble for bot */
+            : 'px-4 py-3 md:px-5 md:py-3.5 bg-[#3578E5] text-white rounded-[18px] rounded-br-[6px] shadow-[0_1px_4px_rgba(53,120,229,0.25)]'
             }`}
           style={isBot ? { color: TEXT_COLOR } : undefined}
         >
@@ -403,6 +428,13 @@ export default function ChatCreatePage() {
   const [greeting] = useState(getGreeting);
   const [isRecording, setIsRecording] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+
+  // CRM Lead tracking states
+  const [showLeadModal, setShowLeadModal] = useState(false);
+  const [leadFormData, setLeadFormData] = useState({ fullName: '', phone: '', email: '' });
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [isEndingChat, setIsEndingChat] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -421,6 +453,59 @@ export default function ChatCreatePage() {
   useEffect(() => { messagesRef.current = messages; }, [messages]);
 
   const hasMessages = messages.length > 0;
+
+  // Ref tracking for background silently analyzing chat
+  const bgLeadIdRef = useRef<string | null>(null);
+  const bgMessagesRef = useRef<ChatMessage[]>([]);
+  useEffect(() => { bgLeadIdRef.current = leadId; }, [leadId]);
+  useEffect(() => { bgMessagesRef.current = messages; }, [messages]);
+
+  useEffect(() => {
+    const sendSilentAnalysis = () => {
+      const currentLeadId = bgLeadIdRef.current;
+      const history = bgMessagesRef.current;
+      
+      // Only send if there's a lead and we have some messages
+      if (currentLeadId && history.length > 1) {
+        // Extract relevant data for API
+        const cleanHistory = history.map(m => ({ role: m.role, content: m.content }));
+        const payload = JSON.stringify({ chatHistory: cleanHistory });
+        
+        // Use sendBeacon which is non-blocking and works during page unload/tab close
+        navigator.sendBeacon(`/api/chat-leads/${currentLeadId}/analyze`, new Blob([payload], { type: 'application/json' }));
+      }
+    };
+
+    // Trigger when user closes tab, reloads, or navigates away
+    window.addEventListener('beforeunload', sendSilentAnalysis);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') sendSilentAnalysis();
+    });
+
+    return () => {
+      window.removeEventListener('beforeunload', sendSilentAnalysis);
+      sendSilentAnalysis(); // Trigger on SPA unmount
+    };
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ufm_chatbot_lead');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.id) {
+          setLeadId(parsed.id);
+          setLeadFormData(parsed);
+        } else {
+          setShowLeadModal(true);
+        }
+      } catch (e) {
+        setShowLeadModal(true);
+      }
+    } else {
+      setShowLeadModal(true);
+    }
+  }, []);
 
   /* ── Speech Recognition setup ── */
   useEffect(() => {
@@ -596,6 +681,13 @@ export default function ChatCreatePage() {
       .filter(m => !m.isTyping)
       .slice(-20)
       .map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
+
+    if (leadFormData.fullName) {
+      chatHistory.unshift({ 
+        role: 'user', 
+        content: `HỆ THỐNG: Người dùng tên là ${leadFormData.fullName}. Hãy xưng hô bằng tên thân thiện. SĐT: ${leadFormData.phone}. Email: ${leadFormData.email}.` 
+      });
+    }
 
     // Reset token buffer
     tokenBufferRef.current = '';
@@ -822,7 +914,7 @@ export default function ChatCreatePage() {
             </Link>
 
             <div className="flex items-center gap-2">
-              <button onClick={handleNewChat} className="hidden md:flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-medium text-[#6b7280] bg-[#f3f4f6] rounded-full hover:bg-[#e5e7eb] active:scale-95 transition-all">
+              <button onClick={() => { setMessages([]); }} className="hidden md:flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-medium text-[#6b7280] bg-[#f3f4f6] rounded-full hover:bg-[#e5e7eb] active:scale-95 transition-all">
                 <Plus size={13} />
                 Chat mới
               </button>
@@ -836,6 +928,94 @@ export default function ChatCreatePage() {
 
         {/* ═══════════ MAIN CONTENT AREA ═══════════ */}
         <main ref={chatContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden relative chat-scroll">
+
+          {/* CRM Modal */}
+          <AnimatePresence>
+            {showLeadModal && (
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+              >
+                <motion.div 
+                  initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }}
+                  className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                >
+                  <div className="bg-[#005496] p-5 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[url('/images/pattern.png')] opacity-10" />
+                    <div className="relative z-10">
+                      <div className="w-12 h-12 bg-white rounded-full mx-auto mb-3 flex items-center justify-center shadow-lg">
+                        <Image src="/images/ufm_chatbot_icon.png" alt="UFM" width={32} height={32} className="rounded-full" />
+                      </div>
+                      <h2 className="text-white text-lg font-bold">Chào mừng bạn đến với UFM Bot</h2>
+                      <p className="text-[#90c2ff] text-sm mt-1 mb-2">Vui lòng cung cấp một số thông tin để chúng tôi hỗ trợ bạn tốt nhất.</p>
+                    </div>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div>
+                      <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5 ">Họ và tên *</label>
+                      <div className="relative">
+                        <UserCircle2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input type="text" value={leadFormData.fullName} onChange={e => setLeadFormData({...leadFormData, fullName: e.target.value})} placeholder="Nguyễn Văn A" className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[14px] focus:ring-2 focus:ring-[#005496]/20 focus:border-[#005496] outline-none transition-all" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5">Số điện thoại *</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input type="tel" value={leadFormData.phone} onChange={e => setLeadFormData({...leadFormData, phone: e.target.value})} placeholder="09xxxx" className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[14px] focus:ring-2 focus:ring-[#005496]/20 focus:border-[#005496] outline-none transition-all" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5">Email liên hệ (Tùy chọn)</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input type="email" value={leadFormData.email} onChange={e => setLeadFormData({...leadFormData, email: e.target.value})} placeholder="email@example.com" className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[14px] focus:ring-2 focus:ring-[#005496]/20 focus:border-[#005496] outline-none transition-all" />
+                      </div>
+                    </div>
+                    <button 
+                      className="w-full py-2.5 mt-2 bg-[#005496] text-white rounded-lg font-bold text-[14px] hover:bg-[#00427a] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                      onClick={async () => {
+                        // Validation Logic
+                        const { fullName, phone, email } = leadFormData;
+                        if (!fullName.trim()) return showToast.error('Vui lòng nhập họ và tên của bạn.');
+                        if (fullName.trim().length < 2) return showToast.error('Họ tên quá ngắn.');
+                        
+                        if (!phone.trim()) return showToast.error('Vui lòng nhập số điện thoại.');
+                        const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+                        if (!phoneRegex.test(phone.trim())) return showToast.error('Số điện thoại không đúng định dạng hợp lệ (VD: 0912345678).');
+
+                        if (email.trim()) {
+                           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                           if (!emailRegex.test(email.trim())) return showToast.error('Địa chỉ email không hợp lệ.');
+                        }
+
+                        setIsLoading(true);
+                        try {
+                          const res = await fetch('/api/chat-leads', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                              fullName: fullName.trim(),
+                              phone: phone.trim(),
+                              email: email.trim()
+                            })
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            setLeadId(data.leadId);
+                            setShowLeadModal(false);
+                            localStorage.setItem('ufm_chatbot_lead', JSON.stringify({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim(), id: data.leadId }));
+                          } else showToast.error(data.error);
+                        } catch { showToast.error('Lỗi kết nối máy chủ'); }
+                        setIsLoading(false);
+                      }}
+                    >
+                      {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>Bắt đầu trò chuyện</span>}
+                      {!isLoading && <ArrowLeft className="w-4 h-4 rotate-180" />}
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ─── WELCOME STATE ─── */}
           {!hasMessages && (

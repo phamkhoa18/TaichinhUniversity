@@ -22,7 +22,8 @@ const chatMarkdown: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-[#3578E5] underline underline-offset-2 decoration-[#3578E5]/30 hover:decoration-[#3578E5]/60 transition-colors"
+      className="font-semibold hover:opacity-80 transition-opacity break-words"
+      style={{ color: '#3578E5', textDecoration: 'underline' }}
     >
       {children}
     </a>
@@ -98,26 +99,83 @@ const chatMarkdown: Components = {
   ),
 };
 
-/* ── Strip [Nguồn: ...] references from bot text ── */
 function cleanSources(raw: string): string {
-  // Remove [Nguồn: xxx](url) and [Nguồn: xxx] (with or without number, dash, colon)
-  return raw
-    .replace(/\[Nguồn(?:\s*\d*)?(?:\s*[—:–]\s*)?[^\]]*\](?:\([^)]*\))?/g, '')
-    .replace(/\n{3,}/g, '\n\n') // collapse excess newlines left behind
-    .trim();
+  const FASTAPI_CHAT_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'https://chatbot-ufm-api.vincode.xyz';
+  
+  // Convert [Nguồn...] to visible links if they have a URL
+  let parsed = raw.replace(
+    /\[Nguồn(?:\s*\d*)?(?:\s*[—:–]\s*)?([^\]]+)\](?:\(([^)]+)\))?/g,
+    (match, label: string, url?: string) => {
+      if (url) {
+        const finalUrl = url.trim().startsWith('/view-document') 
+          ? `${FASTAPI_CHAT_URL}${url.trim()}` 
+          : url.trim();
+        return `[Nguồn: ${label.trim()}](${finalUrl})`;
+      }
+      return match;
+    }
+  );
+  return parsed.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 /* ── Render bot message with markdown ── */
 function BotBubbleContent({ text }: { text: string }) {
-  const cleaned = cleanSources(text);
+  let cleaned = text;
+
+  const FASTAPI_CHAT_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'https://chatbot-ufm-api.vincode.xyz';
+  
+  // Extract Nguồn tài liệu
+  const documentSources: Array<{label: string, url: string}> = [];
+  const sourceRegex = /Nguồn tài liệu(?: tham khảo)?:\s*\[(.*?)\]\((.*?)\)/gi;
+  cleaned = cleaned.replace(sourceRegex, (match, label, url) => {
+    const finalUrl = url.trim().startsWith('/view-document') 
+      ? `${FASTAPI_CHAT_URL}${url.trim()}` 
+      : url.trim();
+    documentSources.push({ label: label.trim(), url: finalUrl });
+    return '';
+  });
+
+  // Remove Nguồn tài liệu block followed by raw .md/.txt files
+  cleaned = cleaned.replace(/Nguồn tài liệu(?: tham khảo)?\s*:?[\s\n]*([\w_-]+\.(?:md|txt)[\s\n]*)+/gi, '');
+  cleaned = cleaned.replace(/^.*[\w_-]+\.(?:md|txt).*$/gm, '');
+  cleaned = cleaned.replace(/Nguồn tài liệu(?: tham khảo)?\s*:?[\s\n]*$/gi, '');
+
+  cleaned = cleanSources(cleaned);
+
   return (
-    <div className="cb-md">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={chatMarkdown}>
-        {cleaned}
-      </ReactMarkdown>
+    <div className="flex flex-col gap-1">
+      <div className="cb-md">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={chatMarkdown}>
+          {cleaned}
+        </ReactMarkdown>
+      </div>
+      
+      {documentSources.length > 0 && (
+        <div className="mt-1 pt-1.5 border-t border-black/[0.04] flex flex-col gap-1">
+          <span className="text-[10.5px] font-semibold text-[#005496] flex items-center gap-1 opacity-90">
+            Nguồn tài liệu tham khảo:
+          </span>
+          <div className="flex flex-wrap gap-1">
+            {documentSources.map((src, i) => (
+              <a
+                key={i}
+                href={src.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-[#f0f7ff] hover:bg-[#e0efff] text-[#005496] text-[10.5px] rounded-md transition-colors border border-[#005496]/10"
+              >
+                <span className="max-w-[200px] truncate">{src.label}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+import { Loader2 } from 'lucide-react';
+import { showToast } from '@/lib/toast';
 
 const WELCOME_MSG = {
   id: 1,
@@ -126,6 +184,7 @@ const WELCOME_MSG = {
 };
 
 const STORAGE_KEY = 'ufm_chatbot_messages';
+const LEAD_STORAGE_KEY = 'ufm_chatbot_lead';
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -137,24 +196,75 @@ export default function Chatbot() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
 
+  // CRM Lead Tracking States
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [leadFormData, setLeadFormData] = useState({ fullName: '', phone: '', email: '' });
+  const [isLoadingLead, setIsLoadingLead] = useState(false);
+
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasRestoredRef = useRef(false);
 
-  /* ── Restore messages from localStorage on mount ── */
+  // Ref tracking for background silently analyzing chat
+  const bgLeadIdRef = useRef<string | null>(null);
+  const bgMessagesRef = useRef(messages);
+  useEffect(() => { bgLeadIdRef.current = leadId; }, [leadId]);
+  useEffect(() => { bgMessagesRef.current = messages; }, [messages]);
+
+  /* ── Restore messages & lead from localStorage on mount ── */
   useEffect(() => {
     if (hasRestoredRef.current) return;
     hasRestoredRef.current = true;
+    
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 1) {
-          setMessages(parsed);
+      const savedLead = localStorage.getItem(LEAD_STORAGE_KEY);
+      if (savedLead) {
+        const parsedLead = JSON.parse(savedLead);
+        if (parsedLead.id) {
+          setLeadId(parsedLead.id);
+          setLeadFormData(parsedLead);
         }
       }
     } catch { /* ignore */ }
+
+    try {
+      const savedMsg = localStorage.getItem(STORAGE_KEY);
+      if (savedMsg) {
+        const parsedMsg = JSON.parse(savedMsg);
+        if (Array.isArray(parsedMsg) && parsedMsg.length > 1) {
+          setMessages(parsedMsg);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  /* ── Silent Background Analysis Sync ── */
+  useEffect(() => {
+    const sendSilentAnalysis = () => {
+      const currentLeadId = bgLeadIdRef.current;
+      const history = bgMessagesRef.current;
+      
+      // Only send if there's a lead and we have some messages
+      if (currentLeadId && history.length > 1) {
+        const cleanHistory = history.map((m) => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text,
+        }));
+        const payload = JSON.stringify({ chatHistory: cleanHistory });
+        navigator.sendBeacon(`/api/chat-leads/${currentLeadId}/analyze`, new Blob([payload], { type: 'application/json' }));
+      }
+    };
+
+    window.addEventListener('beforeunload', sendSilentAnalysis);
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') sendSilentAnalysis();
+    });
+
+    return () => {
+      window.removeEventListener('beforeunload', sendSilentAnalysis);
+      sendSilentAnalysis(); // Trigger on SPA unmount
+    };
   }, []);
 
   /* ── Save messages to localStorage on change ── */
@@ -208,7 +318,29 @@ export default function Chatbot() {
     setShowScrollBtn(scrollHeight - scrollTop - clientHeight > 100);
   }, []);
 
-  /* ── Send message ── */
+  const handleEndSession = useCallback(() => {
+    // Send analysis if there are messages
+    const currentLeadId = bgLeadIdRef.current;
+    const history = bgMessagesRef.current;
+    if (currentLeadId && history.length > 1) {
+      const cleanHistory = history.map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+      const payload = JSON.stringify({ chatHistory: cleanHistory });
+      navigator.sendBeacon(`/api/chat-leads/${currentLeadId}/analyze`, new Blob([payload], { type: 'application/json' }));
+    }
+
+    // Clear state completely
+    setMessages([WELCOME_MSG]);
+    setLeadId(null);
+    setLeadFormData({ fullName: '', phone: '', email: '' });
+    localStorage.removeItem(LEAD_STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    setIsOpen(false);
+  }, []);
+
+  /* ── Input Handlers ── */
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -332,70 +464,149 @@ export default function Chatbot() {
                   UFM Tư vấn
                 </span>
               </div>
-              {/* Minimize — dash icon giống VinFast */}
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-[32px] h-[32px] flex items-center justify-center rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors cursor-pointer"
-                aria-label="Thu nhỏ"
-              >
-                <svg width="16" height="2" viewBox="0 0 16 2" fill="none">
-                  <rect width="16" height="2" rx="1" fill="#1a1a1a" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-1">
+                {/* Minimize — dash icon giống VinFast */}
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="w-[32px] h-[32px] flex items-center justify-center rounded-lg hover:bg-black/[0.04] active:bg-black/[0.08] transition-colors cursor-pointer"
+                  aria-label="Thu nhỏ"
+                  title="Thu nhỏ"
+                >
+                  <svg width="14" height="2" viewBox="0 0 16 2" fill="none">
+                    <rect width="16" height="2" rx="1" fill="#1a1a1a" />
+                  </svg>
+                </button>
+                {/* Close/End Session — X icon */}
+                <button
+                  onClick={handleEndSession}
+                  className="w-[32px] h-[32px] flex items-center justify-center rounded-lg hover:text-rose-600 hover:bg-rose-50 active:bg-rose-100 transition-colors cursor-pointer text-[#1a1a1a]"
+                  aria-label="Kt thúc trò chuyện"
+                  title="Kết thúc và thử lại thông tin"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            {/* ─── RESUME PROMPT OVERLAY ─── */}
-            <AnimatePresence>
-              {showResumePrompt && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute inset-0 z-30 bg-white flex flex-col items-center justify-center px-8 text-center"
+            {/* ─── BODY AREA ─── */}
+            {!leadId ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#fafafa]">
+                <div className="w-[60px] h-[60px] bg-white shadow-sm border border-black/[0.04] rounded-2xl flex items-center justify-center mb-4">
+                  <Image src="/images/logo_ufm_50nam_no_bg.png" alt="UFM" width={40} height={40} className="object-contain" />
+                </div>
+                <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-1.5">Để lại thông tin liên hệ</h3>
+                <p className="text-[13px] text-[#666] mb-5 leading-relaxed">
+                  Trước khi bắt đầu, vui lòng cho phép Trợ lý biết tên của Quý khách để tiện xưng hô ạ.
+                </p>
+                <div className="w-full flex flex-col gap-3">
+                  <input
+                    type="text" placeholder="Họ và tên *" value={leadFormData.fullName}
+                    onChange={e => setLeadFormData(p => ({ ...p, fullName: e.target.value }))}
+                    className="w-full h-[44px] px-4 rounded-xl border border-black/[0.1] bg-white text-[13.5px] outline-none focus:border-[#3578E5] focus:ring-2 focus:ring-[#3578E5]/20 transition-all font-medium"
+                  />
+                  <input
+                    type="tel" placeholder="Số điện thoại *" value={leadFormData.phone}
+                    onChange={e => setLeadFormData(p => ({ ...p, phone: e.target.value }))}
+                    className="w-full h-[44px] px-4 rounded-xl border border-black/[0.1] bg-white text-[13.5px] outline-none focus:border-[#3578E5] focus:ring-2 focus:ring-[#3578E5]/20 transition-all font-medium"
+                  />
+                  <input
+                    type="email" placeholder="Email (Không bắt buộc)" value={leadFormData.email}
+                    onChange={e => setLeadFormData(p => ({ ...p, email: e.target.value }))}
+                    className="w-full h-[44px] px-4 rounded-xl border border-black/[0.1] bg-white text-[13.5px] outline-none focus:border-[#3578E5] focus:ring-2 focus:ring-[#3578E5]/20 transition-all font-medium"
+                  />
+                  <button
+                    onClick={async () => {
+                      const { fullName, phone, email } = leadFormData;
+                      
+                      if (!fullName.trim()) return showToast.error('Vui lòng nhập họ và tên của bạn.');
+                      if (fullName.trim().length < 2) return showToast.error('Họ tên quá ngắn.');
+                      
+                      if (!phone.trim()) return showToast.error('Vui lòng nhập số điện thoại.');
+                      const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+                      if (!phoneRegex.test(phone.trim())) return showToast.error('Số điện thoại không đúng định dạng hợp lệ (VD: 0912345678).');
+
+                      if (email.trim()) {
+                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                         if (!emailRegex.test(email.trim())) return showToast.error('Địa chỉ email không hợp lệ.');
+                      }
+
+                      setIsLoadingLead(true);
+                      try {
+                        const res = await fetch('/api/chat-leads', {
+                          method: 'POST', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim() })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          setLeadId(data.leadId);
+                          localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim(), id: data.leadId }));
+                          setTimeout(() => inputRef.current?.focus(), 100);
+                        } else showToast.error(data.error);
+                      } catch { showToast.error('Lỗi kết nối máy chủ'); }
+                      setIsLoadingLead(false);
+                    }}
+                    disabled={isLoadingLead}
+                    className="w-full h-[44px] rounded-xl bg-[#3578E5] text-white text-[14px] font-bold hover:bg-[#2b69d1] active:scale-[0.98] transition-all flex items-center justify-center shadow-sm disabled:opacity-70 mt-1"
+                  >
+                    {isLoadingLead ? <Loader2 size={18} className="animate-spin" /> : 'Bắt đầu ngay'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <AnimatePresence>
+                  {showResumePrompt && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute inset-0 z-30 bg-white flex flex-col items-center justify-center px-8 text-center"
+                    >
+                      {/* Mascot */}
+                      <div className="w-[56px] h-[56px] rounded-2xl overflow-hidden ring-1 ring-black/[0.06] mb-5 shadow-sm">
+                        <Image src="/images/ufm_chatbot.png" alt="UFM" width={56} height={56} className="w-full h-full object-cover" />
+                      </div>
+
+                      <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-1.5">
+                        Chào mừng {leadFormData.fullName ? leadFormData.fullName.split(' ').pop() : 'bạn'} trở lại! 👋
+                      </h3>
+                      <p className="text-[13px] text-[#888] leading-[1.5] mb-6">
+                        Bạn có đoạn trò chuyện trước đó.
+                        <br />
+                        Bạn muốn tiếp tục hay bắt đầu mới?
+                      </p>
+
+                      <div className="flex flex-col gap-2.5 w-full max-w-[240px]">
+                        <button
+                          onClick={handleResume}
+                          className="w-full h-[42px] rounded-xl bg-[#3578E5] text-white text-[13.5px] font-semibold hover:bg-[#2b69d1] active:scale-[0.98] transition-all cursor-pointer shadow-sm"
+                        >
+                          Tiếp tục đoạn chat
+                        </button>
+                        <button
+                          onClick={handleNewChat}
+                          className="w-full h-[42px] rounded-xl bg-[#F0F0F0] text-[#333] text-[13.5px] font-medium hover:bg-[#e5e5e5] active:scale-[0.98] transition-all cursor-pointer"
+                        >
+                          Bắt đầu cuộc trò chuyện mới
+                        </button>
+                      </div>
+
+                      <p className="text-[11px] text-[#bbb] mt-5">
+                        {messages.length - 1} tin nhắn trước đó
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* ─── MESSAGES ─── */}
+                <div
+                  ref={chatBodyRef}
+                  onScroll={handleScroll}
+                  className="flex-1 overflow-y-auto px-4 pt-5 pb-3 bg-white cb-scroll"
                 >
-                  {/* Mascot */}
-                  <div className="w-[56px] h-[56px] rounded-2xl overflow-hidden ring-1 ring-black/[0.06] mb-5 shadow-sm">
-                    <Image src="/images/ufm_chatbot.png" alt="UFM" width={56} height={56} className="w-full h-full object-cover" />
-                  </div>
-
-                  <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-1.5">
-                    Chào mừng trở lại! 👋
-                  </h3>
-                  <p className="text-[13px] text-[#888] leading-[1.5] mb-6">
-                    Bạn có đoạn trò chuyện trước đó.
-                    <br />
-                    Bạn muốn tiếp tục hay bắt đầu mới?
-                  </p>
-
-                  <div className="flex flex-col gap-2.5 w-full max-w-[240px]">
-                    <button
-                      onClick={handleResume}
-                      className="w-full h-[42px] rounded-xl bg-[#3578E5] text-white text-[13.5px] font-semibold hover:bg-[#2b69d1] active:scale-[0.98] transition-all cursor-pointer shadow-sm"
-                    >
-                      Tiếp tục đoạn chat
-                    </button>
-                    <button
-                      onClick={handleNewChat}
-                      className="w-full h-[42px] rounded-xl bg-[#F0F0F0] text-[#333] text-[13.5px] font-medium hover:bg-[#e5e5e5] active:scale-[0.98] transition-all cursor-pointer"
-                    >
-                      Bắt đầu cuộc trò chuyện mới
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-[#bbb] mt-5">
-                    {messages.length - 1} tin nhắn trước đó
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ─── MESSAGES ─── */}
-            <div
-              ref={chatBodyRef}
-              onScroll={handleScroll}
-              className="flex-1 overflow-y-auto px-4 pt-5 pb-3 bg-white cb-scroll"
-            >
               {messages.map((msg) => (
                 <div key={msg.id} className={`mb-4 ${msg.sender === 'user' ? 'flex flex-col items-end' : ''}`}>
                   {/* Label + avatar */}
@@ -501,7 +712,9 @@ export default function Chatbot() {
                   </span>
                 </p>
               </div>
-            </div>
+              </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

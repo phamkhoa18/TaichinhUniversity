@@ -19,7 +19,6 @@ import SchoolsSection from '@/app/components/SchoolsSection';
 import CtaSection from '@/app/components/CtaSection';
 import VideoHighlight from '@/app/components/VideoHighlight';
 import ConsultationSection from '@/app/components/ConsultationSection';
-import Chatbot from '@/app/components/Chatbot';
 import GlobalPopup from '@/app/components/GlobalPopup';
 import { useSiteSettings } from '@/store/SiteSettingsProvider';
 
@@ -125,9 +124,6 @@ export default function HomePage() {
 
   const activeVideo = config?.videoHighlight || null;
 
-  // Chatbot hiển thị dựa trên settings (mặc định: hiện)
-  const showChatbot = settings?.appearance?.showChatbot !== false;
-
   const next = useCallback(() => {
     setCurrent((prev) => (prev + 1) % heroSlides.length);
   }, []);
@@ -225,47 +221,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-
-      {/* ══════════════  TRA CỨU THÔNG TIN (MINIMAL)  ══════════════ */}
-      {/* <section className="qsearch-section">
-        <div className="vlu-news-container">
-          <motion.div
-            className="qsearch-inner"
-            initial="hidden" whileInView="visible" viewport={{ once: true }}
-            variants={fadeUp} custom={0}
-          >
-            <h2 className="qsearch-title">Bạn đang tìm kiếm điều gì?</h2>
-
-            <div className="qsearch-bar">
-              <Search size={18} className="qsearch-icon" />
-              <input type="text" placeholder="Tìm chương trình, thông tin tuyển sinh, điểm thi..." />
-              <button className="qsearch-btn" aria-label="Tìm kiếm">
-                <ArrowRight size={18} />
-              </button>
-            </div>
-
-            <div className="qsearch-links">
-              {[
-                { icon: <GraduationCap size={15} />, text: 'Thạc sĩ' },
-                { icon: <Award size={15} />, text: 'Tiến sĩ' },
-                { icon: <BookOpen size={15} />, text: 'Điểm thi' },
-                { icon: <Target size={15} />, text: 'Tuyển sinh' },
-                { icon: <CalendarDays size={15} />, text: 'Lịch học' },
-                { icon: <Briefcase size={15} />, text: 'Luận văn' },
-                { icon: <Users size={15} />, text: 'Học viên' },
-                { icon: <Scale size={15} />, text: 'Quy định' },
-              ].map((item, idx) => (
-                <a key={idx} href="#" className="qsearch-link">
-                  {item.icon}
-                  {item.text}
-                </a>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section> */}
-
-
 
       {/* ══════════════  UFM HIGHLIGHT (VLU STYLE CLONE)  ══════════════ */}
       {activeVideo && (
@@ -573,9 +528,6 @@ export default function HomePage() {
           </div>
         </div>
       )}
-
-      {/* ══════════════  CHATBOT UI  ══════════════ */}
-      {showChatbot && <Chatbot />}
 
       {/* ══════════════  GLOBAL POPUP  ══════════════ */}
       <GlobalPopup />

@@ -41,68 +41,7 @@ interface NavItem {
   };
 }
 
-/* ── Fallback hardcoded data — dùng khi DB chưa có ── */
-const FALLBACK_NAV: NavItem[] = [
-  {
-    label: 'Giới thiệu', type: 'mega',
-    overview: { label: 'Tổng quan', href: '/gioi-thieu' },
-    groups: [
-      {
-        title: 'Về UFM',
-        links: [
-          { label: 'Tổng quan', href: '/gioi-thieu' },
-          { label: 'Cơ cấu tổ chức', href: '/gioi-thieu/co-cau-to-chuc' },
-          { label: 'Thành tựu nổi bật', href: '#' },
-          { label: 'Cơ sở vật chất', href: '#' },
-        ],
-      },
-      { title: 'Hợp tác', links: [{ label: 'Đối tác trong nước', href: '#' }, { label: 'Đối tác quốc tế', href: '#' }, { label: 'Doanh nghiệp', href: '#' }] },
-    ],
-    promo: { title: 'Trường Đại học Tài chính – Marketing', desc: '50 năm xây dựng và phát triển, đào tạo nguồn nhân lực chất lượng cao.', cta: 'Tìm hiểu thêm về UFM', href: '#' },
-  },
-  {
-    label: 'Đào tạo', type: 'mega',
-    overview: { label: 'Tổng quan', href: '#' },
-    groups: [
-      { title: 'Chương trình đào tạo', links: [{ label: 'Đại học chính quy', href: '#' }, { label: 'Sau đại học', href: '#' }, { label: 'Chương trình quốc tế', href: '#' }, { label: 'Đào tạo ngắn hạn', href: '#' }] },
-      { title: 'Tuyển sinh', links: [{ label: 'Thông tin tuyển sinh', href: '#' }, { label: 'Điều kiện xét tuyển', href: '#' }, { label: 'Đăng ký trực tuyến', href: '#' }] },
-    ],
-    promo: { title: 'Các Trường & Khối đào tạo', desc: 'Trường ĐH Tài chính – Marketing đào tạo đa ngành với chương trình đạt chuẩn quốc tế.', cta: 'Xem toàn bộ ngành đào tạo', href: '#' },
-  },
-  {
-    label: 'Sinh viên', type: 'mega',
-    overview: { label: 'Tổng quan', href: '#' },
-    groups: [
-      { title: 'Học tập', links: [{ label: 'Lịch học & Thi', href: '#' }, { label: 'Hoạt động NCKH', href: '#' }, { label: 'Thư viện & Tài liệu', href: '#' }] },
-      { title: 'Đời sống', links: [{ label: 'CLB & Đoàn thể', href: '#' }, { label: 'Ký túc xá', href: '#' }, { label: 'Học bổng', href: '#' }] },
-    ],
-    promo: { title: 'Đời sống Sinh viên UFM', desc: 'Trải nghiệm môi trường học tập năng động, sáng tạo.', cta: 'Khám phá đời sống sinh viên', href: '#' },
-  },
-  {
-    label: 'Nghiên cứu khoa học', type: 'mega',
-    overview: { label: 'Tổng quan', href: '#' },
-    groups: [
-      { title: 'Nghiên cứu khoa học tại UFM', links: [{ label: 'Lĩnh vực nghiên cứu tập trung', href: '#' }, { label: 'Công bố khoa học', href: '#' }] },
-      { title: 'Các thông tin khác', links: [{ label: 'Cơ sở vật chất & Phòng thí nghiệm', href: '#' }, { label: 'Dự án nghiên cứu', href: '#' }, { label: 'Hội đồng Đạo đức', href: '#' }, { label: 'Đơn vị nghiên cứu', href: '#' }] },
-    ],
-    promo: { title: 'Nghiên cứu tại UFM', desc: 'Phòng thí nghiệm hiện đại và đội ngũ giảng viên nghiên cứu hàng đầu.', cta: 'Tìm hiểu thêm', href: '#' },
-  },
-  { label: 'Tin tức', href: '/news', type: 'link' },
-  { label: 'Liên hệ', href: '/lien-he', type: 'link' },
-];
 
-const EXPLORE_LINKS = [
-  { label: 'Tuyển sinh', href: '#' },
-  { label: 'Tin tức', href: '/news' },
-  { label: 'Sự kiện', href: '/news' },
-  { label: 'Liên hệ', href: '/lien-he' },
-];
-
-const POPULAR_LINKS = [
-  { label: 'Đăng ký xét tuyển', href: '#' },
-  { label: 'Lịch thi', href: '#' },
-  { label: 'Học bổng', href: '#' },
-];
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -110,7 +49,7 @@ export default function Header() {
   const [drillIdx, setDrillIdx] = useState<number | null>(null);
   const [activeMega, setActiveMega] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState<NavItem[]>(FALLBACK_NAV);
+  const [menuItems, setMenuItems] = useState<NavItem[]>([]);
   const { settings } = useSiteSettings();
 
   // ── Fetch menu từ DB ──
@@ -277,7 +216,7 @@ export default function Header() {
 
           <div className="header-actions">
             <button onClick={() => { setSearchOpen(true); closeMega(); }} className="header-btn btn-outline"><Search size={16} /> Tìm kiếm</button>
-            <a href="#" className="header-btn btn-primary">Đăng ký</a>
+            <a href="/dang-nhap" className="header-btn btn-primary">Đăng nhập</a>
           </div>
 
           {/* Mobile Search + Toggle */}
@@ -410,24 +349,7 @@ export default function Header() {
                 ))}
               </ul>
 
-              <div className="mega-explore">
-                <span className="mega-explore-label">Khám phá</span>
-                {EXPLORE_LINKS.map((link, i) => (
-                  <a key={i} className="mega-explore-link" href={link.href} onClick={closeMobile}>
-                    {link.label}
-                  </a>
-                ))}
-              </div>
 
-              <div className="mega-popular">
-                <span className="mega-popular-label">Truy cập nhanh</span>
-                {POPULAR_LINKS.map((link, i) => (
-                  <a key={i} className="mega-popular-link" href={link.href} onClick={closeMobile}>
-                    <span>{link.label}</span>
-                    <ChevronRight size={14} />
-                  </a>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -459,7 +381,7 @@ export default function Header() {
           </div>
 
           <div className="mega-cta-bar">
-            <a href="#" className="mega-cta-btn mega-cta-primary" onClick={closeMobile}>Đăng ký</a>
+            <a href="/dang-nhap" className="mega-cta-btn mega-cta-primary" onClick={closeMobile}>Đăng nhập</a>
             <button className="mega-cta-btn mega-cta-outline" onClick={() => { closeMobile(); setSearchOpen(true); }}>
               <Search size={15} /> Tìm kiếm
             </button>

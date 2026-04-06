@@ -5,6 +5,7 @@ import AdminSidebar from './AdminSidebar'
 import AdminHeader from './AdminHeader'
 import { SessionUser } from '@/types/auth'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { NotificationProvider } from './NotificationProvider'
 
 interface AdminShellProps {
   user: SessionUser
@@ -25,6 +26,7 @@ export default function AdminShell({ user, children }: AdminShellProps) {
   }, [isMobileOpen])
 
   return (
+    <NotificationProvider>
     <TooltipProvider delayDuration={200}>
       <div className="flex h-screen overflow-hidden bg-[#f8f9fb] text-slate-900 font-sans selection:bg-[#005496]/20 selection:text-[#005496]">
         
@@ -65,5 +67,6 @@ export default function AdminShell({ user, children }: AdminShellProps) {
         </div>
       </div>
     </TooltipProvider>
+    </NotificationProvider>
   )
 }
