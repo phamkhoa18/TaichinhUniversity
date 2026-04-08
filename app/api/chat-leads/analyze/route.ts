@@ -2,31 +2,30 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import Lead from '@/models/Lead';
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: Request) {
   try {
-    await connectDB();
-    const { id } = await params;
-    const { chatHistory } = await req.json();
+    const { fullName, phone, email, chatHistory } = await req.json();
 
-    if (!chatHistory || !Array.isArray(chatHistory)) {
-      return NextResponse.json({ error: 'Thiếu lịch sử chat' }, { status: 400 });
+    if (!fullName || !phone) {
+      return NextResponse.json({ error: 'Thiếu thông tin liên hệ' }, { status: 400 });
     }
 
-    // Prepare history text
+    if (!chatHistory || !Array.isArray(chatHistory) || chatHistory.length < 2) {
+      return NextResponse.json({ success: true, message: 'Chưa có tương tác đủ để lưu.' }, { status: 200 });
+    }
+
+    // Chuẩn bị text lịch sử chat
     const historyText = chatHistory
-      .filter((m) => m.role !== 'system') // Exclude hidden setup prompts if any
+      .filter((m) => m.role !== 'system')
       .map((m) => `${m.role === 'user' ? 'Người dùng' : 'Bot'}: ${m.content}`)
       .join('\n');
 
-    // Call OpenRouter
+    // Gọi OpenRouter Gemini phân tích toàn bộ mẩu thoại
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
     let analysisResult = {
       isPotential: false,
       score: 0,
-      summary: 'Không thể phân tích do thiếu API Key hoặc lỗi',
+      summary: 'Không có API Key hoặc lỗi',
       interestedPrograms: [],
     };
 
@@ -39,7 +38,7 @@ export async function POST(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash', // You can use standard models here, gemini flash is cheap and fast
+            model: 'google/gemini-2.5-flash',
             messages: [
               {
                 role: 'system',
@@ -51,7 +50,7 @@ YÊU CẦU ĐẦU RA BẮT BUỘC (Chỉ trả về định dạng JSON, không 
   "score": number (Điểm tiềm năng từ 1 đến 10),
   "interestedPrograms": string[] (Danh sách các ngành học họ nhắc đến hoặc quan tâm),
   "summary": string (Tóm tắt ngắn gọn mục đích và nhu cầu của họ)
-}`,
+}`
               },
               {
                 role: 'user',
@@ -69,37 +68,34 @@ YÊU CẦU ĐẦU RA BẮT BUỘC (Chỉ trả về định dạng JSON, không 
           try {
             const parsed = JSON.parse(content);
             analysisResult = { ...analysisResult, ...parsed };
-          } catch (parseError) {
-            console.error('Error parsing OpenRouter response', parseError);
-          }
-        } else {
-          console.error('OpenRouter API error', await response.text());
+          } catch (parseError) {}
         }
-      } catch (err) {
-        console.error('Failed to call OpenRouter:', err);
-      }
+      } catch (err) {}
     }
 
-    // Cập nhật Lead vào DB, kể cả rác hay không vẫn giữ lại để admin tự xem xét
+    // Nếu điểm dưới 5 thì KHÔNG LƯU vào hệ thống
     const isJunk = analysisResult.score < 5 || !analysisResult.isPotential;
-    const lead = await Lead.findByIdAndUpdate(
-      id,
-      {
-        aiAnalysis: analysisResult,
-        status: isJunk ? 'Junk' : 'New', // Phân loại trạng thái thay vì xóa
-      },
-      { returnDocument: 'after' }
-    );
 
-    if (!lead) {
-      return NextResponse.json({ success: true, message: 'Lead không tồn tại.' }, { status: 200 });
+    if (isJunk) {
+      return NextResponse.json({ success: true, message: 'Lead dưới 5 điểm, KHÔNG gửi lên hệ thống DB.' }, { status: 200 });
     }
+
+    // Nếu trên 5 điểm thì mới CREATE Lead trên Database
+    await connectDB();
+    const lead = await Lead.create({
+      fullName,
+      phone,
+      email: email || '',
+      source: 'AI_Chatbot',
+      status: 'New',
+      aiAnalysis: analysisResult,
+    });
 
     return NextResponse.json({ success: true, lead });
   } catch (error: any) {
     console.error('Error analyzing lead:', error);
     return NextResponse.json(
-      { error: 'Gặp lỗi trong quá trình phân tích' },
+      { error: 'Gặp lỗi trong quá trình phân tích và lưu' },
       { status: 500 }
     );
   }

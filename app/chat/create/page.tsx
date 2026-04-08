@@ -45,10 +45,10 @@ function getGreeting(): { text: string; highlight: string; emoji: string } {
    Suggestion chips
    ═══════════════════════════════════════ */
 const QUICK_SUGGESTIONS = [
-  { icon: Calendar, text: 'Thông tin tuyển sinh SĐH 2026', color: '#ef4444', bg: '#fef2f2' },
-  { icon: Lightbulb, text: 'Tôi muốn biết về học bổng của trường', color: '#f59e0b', bg: '#fffbeb' },
-  { icon: Monitor, text: 'Chương trình MBA có gì nổi bật?', color: '#0284c7', bg: '#f0f9ff' },
-  { icon: GraduationCap, text: 'Điều kiện xét tuyển Thạc sĩ', color: '#7c3aed', bg: '#f5f3ff' },
+  { icon: GraduationCap, text: 'Chương trình đào tạo thạc sĩ', color: '#0284c7', bg: '#f0f9ff' },
+  { icon: BookOpen, text: 'Chương trình đào tạo tiến sĩ', color: '#7c3aed', bg: '#f5f3ff' },
+  { icon: Lightbulb, text: 'Cơ hội việc làm sau khi học thạc sĩ', color: '#f59e0b', bg: '#fffbeb' },
+  { icon: Calendar, text: 'Điều kiện và thời gian xét tuyển', color: '#ef4444', bg: '#fef2f2' },
 ];
 
 /* Body text color from user spec */
@@ -454,25 +454,34 @@ export default function ChatCreatePage() {
 
   const hasMessages = messages.length > 0;
 
+  const [hasLeadInfo, setHasLeadInfo] = useState(false);
+
   // Ref tracking for background silently analyzing chat
-  const bgLeadIdRef = useRef<string | null>(null);
+  const bgHasLeadInfoRef = useRef(false);
+  const bgLeadDataRef = useRef({ fullName: '', phone: '', email: '' });
   const bgMessagesRef = useRef<ChatMessage[]>([]);
-  useEffect(() => { bgLeadIdRef.current = leadId; }, [leadId]);
+  useEffect(() => { bgHasLeadInfoRef.current = hasLeadInfo; }, [hasLeadInfo]);
+  useEffect(() => { bgLeadDataRef.current = leadFormData; }, [leadFormData]);
   useEffect(() => { bgMessagesRef.current = messages; }, [messages]);
 
   useEffect(() => {
     const sendSilentAnalysis = () => {
-      const currentLeadId = bgLeadIdRef.current;
       const history = bgMessagesRef.current;
+      const data = bgLeadDataRef.current;
       
-      // Only send if there's a lead and we have some messages
-      if (currentLeadId && history.length > 1) {
-        // Extract relevant data for API
-        const cleanHistory = history.map(m => ({ role: m.role, content: m.content }));
-        const payload = JSON.stringify({ chatHistory: cleanHistory });
+      if (bgHasLeadInfoRef.current && history.length > 1) {
+        // Đánh dấu đã gửi để chống gửi đúp
+        bgHasLeadInfoRef.current = false;
         
-        // Use sendBeacon which is non-blocking and works during page unload/tab close
-        navigator.sendBeacon(`/api/chat-leads/${currentLeadId}/analyze`, new Blob([payload], { type: 'application/json' }));
+        const cleanHistory = history.map(m => ({ role: m.role, content: m.content }));
+        const payload = JSON.stringify({ ...data, chatHistory: cleanHistory });
+        
+        fetch(`/api/chat-leads/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true
+        }).catch(() => {});
       }
     };
 
@@ -489,22 +498,9 @@ export default function ChatCreatePage() {
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem('ufm_chatbot_lead');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.id) {
-          setLeadId(parsed.id);
-          setLeadFormData(parsed);
-        } else {
-          setShowLeadModal(true);
-        }
-      } catch (e) {
-        setShowLeadModal(true);
-      }
-    } else {
-      setShowLeadModal(true);
-    }
+    // Luôn hiển thị form lấy thông tin mỗi khi load/reload trang
+    localStorage.removeItem('ufm_chatbot_lead');
+    setShowLeadModal(true);
   }, []);
 
   /* ── Speech Recognition setup ── */
@@ -857,10 +853,29 @@ export default function ChatCreatePage() {
   };
 
   const handleNewChat = () => {
+    // Phân tích người dùng trc khi xoá chat (mô phỏng tắt tab)
+    const history = messages;
+    if (hasLeadInfo && history.length > 1) {
+      bgHasLeadInfoRef.current = false; // Tránh gọi đúp
+      
+      const cleanHistory = history.map(m => ({ role: m.role, content: m.content }));
+      const payload = JSON.stringify({ ...leadFormData, chatHistory: cleanHistory });
+      fetch(`/api/chat-leads/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true
+      }).catch(() => {});
+    }
+
     setMessages([]);
     setInput('');
     sessionIdRef.current = `web-${Date.now()}`;
-    textareaRef.current?.focus();
+    
+    // Reset thông tin form và bắt đầu session hoàn toàn mới
+    setHasLeadInfo(false);
+    setLeadFormData({ fullName: '', phone: '', email: '' });
+    setShowLeadModal(true);
   };
 
   return (
@@ -914,7 +929,7 @@ export default function ChatCreatePage() {
             </Link>
 
             <div className="flex items-center gap-2">
-              <button onClick={() => { setMessages([]); }} className="hidden md:flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-medium text-[#6b7280] bg-[#f3f4f6] rounded-full hover:bg-[#e5e7eb] active:scale-95 transition-all">
+              <button onClick={handleNewChat} className="hidden md:flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-medium text-[#6b7280] bg-[#f3f4f6] rounded-full hover:bg-[#e5e7eb] active:scale-95 transition-all">
                 <Plus size={13} />
                 Chat mới
               </button>
@@ -990,22 +1005,12 @@ export default function ChatCreatePage() {
                         }
 
                         setIsLoading(true);
-                        try {
-                          const res = await fetch('/api/chat-leads', {
-                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-                              fullName: fullName.trim(),
-                              phone: phone.trim(),
-                              email: email.trim()
-                            })
-                          });
-                          const data = await res.json();
-                          if (data.success) {
-                            setLeadId(data.leadId);
-                            setShowLeadModal(false);
-                            localStorage.setItem('ufm_chatbot_lead', JSON.stringify({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim(), id: data.leadId }));
-                          } else showToast.error(data.error);
-                        } catch { showToast.error('Lỗi kết nối máy chủ'); }
-                        setIsLoading(false);
+                        // Chỉ lưu thông tin ở frontend, API phân tích gọi ở lần cuối của đoạn hội thoại
+                        setTimeout(() => {
+                           setHasLeadInfo(true);
+                           setShowLeadModal(false);
+                           setIsLoading(false);
+                        }, 500);
                       }}
                     >
                       {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>Bắt đầu trò chuyện</span>}

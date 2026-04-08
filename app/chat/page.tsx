@@ -1,17 +1,16 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-  Send, Mic, Plus, Sparkles, GraduationCap,
-  BookOpen, HelpCircle, Bot, User, ArrowLeft,
-  MessageCircle, Lightbulb, Calendar, Clock,
+  Send, Mic, Plus, GraduationCap,
+  BookOpen, HelpCircle, Bot, User,
+  MessageCircle, Calendar,
   Shield, Globe, Phone, Mail, MapPin,
-  ChevronRight, ExternalLink, Heart, Star,
-  Brain, Cpu, Zap, Database, Network, Activity,
-  Eye, Lock, RefreshCw, Layers
+  ChevronRight, ExternalLink, Star,
+  Award, Clock, Building
 } from 'lucide-react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
@@ -42,11 +41,6 @@ const slideRight = {
   })
 };
 
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } }
-};
-
 /* ═══════════════════════════════════════
    Data
    ═══════════════════════════════════════ */
@@ -58,47 +52,40 @@ const SUGGESTIONS = [
 ];
 
 const STATS = [
-  { value: '<1s', label: 'Phản hồi tức thời', icon: Zap, color: '#f59e0b' },
-  { value: '99%', label: 'Độ chính xác', icon: Shield, color: '#10b981' },
-  { value: '24/7', label: 'Luôn sẵn sàng', icon: Globe, color: '#3b82f6' },
-  { value: '12+', label: 'Chuyên ngành SĐH', icon: GraduationCap, color: '#8b5cf6' },
+  { value: '24/7', label: 'Luôn sẵn sàng', icon: Clock, color: '#f59e0b' },
+  { value: '100%', label: 'Tin cậy & Chính xác', icon: Shield, color: '#10b981' },
+  { value: '15+', label: 'Chuyên ngành Đào tạo', icon: BookOpen, color: '#3b82f6' },
+  { value: 'Top', label: 'Chất lượng Giáo dục', icon: Award, color: '#8b5cf6' },
 ];
 
 const FEATURES = [
   {
-    icon: Brain,
-    title: 'Xử lý Ngôn ngữ Tự Nhiên',
-    desc: 'Mô hình AI tiên tiến hiểu ngữ cảnh, phân tích ngữ nghĩa và phản hồi chính xác bằng tiếng Việt.',
+    icon: Clock,
+    title: 'Tư vấn Liên tục 24/7',
+    desc: 'Luôn sẵn sàng đồng hành và giải đáp mọi thắc mắc của bạn về quy chế, điều kiện xét tuyển bất kể thời gian.',
     gradient: 'from-[#005496] to-[#0ea5e9]',
-    tag: 'NLP Engine',
+    tag: 'Tức thời',
   },
   {
-    icon: Database,
-    title: 'RAG — Truy xuất Thông minh',
-    desc: 'Retrieval-Augmented Generation kết hợp Vector Search để trích xuất dữ liệu từ nguồn chính thức.',
+    icon: GraduationCap,
+    title: 'Đào tạo Đa Cấp Đồ',
+    desc: 'Thông tin chi tiết về các chương trình đào tạo trình độ Thạc sĩ, Tiến sĩ tại Đại học Tài chính - Marketing.',
     gradient: 'from-[#7c3aed] to-[#a78bfa]',
-    tag: 'Vector DB',
+    tag: 'Đa dạng',
   },
   {
     icon: Shield,
-    title: 'Dữ liệu Xác thực & Bảo mật',
-    desc: 'Thông tin được xác minh từ quy định chính thức của Viện Sau Đại học, cập nhật liên tục.',
+    title: 'Dữ liệu Thẩm định',
+    desc: 'Toàn bộ thông tin tư vấn được cập nhật và kiểm duyệt trực tiếp từ Viện Đào tạo Sau đại học UFM.',
     gradient: 'from-[#059669] to-[#34d399]',
-    tag: 'Verified',
+    tag: 'Chính xác cao',
   },
-];
-
-const AI_PIPELINE = [
-  { icon: Eye, label: 'Nhận diện ý định', desc: 'Intent Classification', color: '#3b82f6' },
-  { icon: Brain, label: 'Phân tích ngữ cảnh', desc: 'Context Analysis', color: '#8b5cf6' },
-  { icon: Database, label: 'Truy vấn Vector DB', desc: 'RAG Retrieval', color: '#0ea5e9' },
-  { icon: Sparkles, label: 'Sinh câu trả lời', desc: 'Response Generation', color: '#10b981' },
 ];
 
 const LINKS = [
   { label: 'Cổng thông tin ĐH Tài chính – Marketing', href: 'https://ufm.edu.vn', icon: Globe, desc: 'Website chính thức nhà trường' },
-  { label: 'Viện Đào tạo Sau Đại học', href: '#', icon: GraduationCap, desc: 'Thông tin chương trình đào tạo' },
-  { label: 'Liên hệ tư vấn trực tiếp', href: '#lien-he', icon: Phone, desc: 'Hotline & email hỗ trợ' },
+  { label: 'Viện Đào tạo Sau Đại học', href: '#', icon: Building, desc: 'Thông tin chương trình đào tạo' },
+  { label: 'Chuyên trang Tuyển sinh', href: '#', icon: GraduationCap, desc: 'Quy chế & thông báo tuyển sinh' },
 ];
 
 /* ═══════════════════════════════════════
@@ -126,93 +113,35 @@ function useTypingEffect(text: string, speed = 35) {
 }
 
 /* ═══════════════════════════════════════
-   Neural Network SVG Background
+   Floating Decorations (replaces tech particles)
    ═══════════════════════════════════════ */
-function NeuralNetworkBg() {
-  const nodes = useMemo(() => Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    cx: 5 + (i % 5) * 22 + (Math.random() * 10 - 5),
-    cy: 10 + Math.floor(i / 5) * 22 + (Math.random() * 10 - 5),
-    r: 1 + Math.random() * 1.5,
-    delay: Math.random() * 3,
-  })), []);
-
-  const edges = useMemo(() => {
-    const e: Array<{ x1: number; y1: number; x2: number; y2: number; delay: number }> = [];
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const dist = Math.sqrt((nodes[i].cx - nodes[j].cx) ** 2 + (nodes[i].cy - nodes[j].cy) ** 2);
-        if (dist < 28 && Math.random() > 0.4) {
-          e.push({ x1: nodes[i].cx, y1: nodes[i].cy, x2: nodes[j].cx, y2: nodes[j].cy, delay: Math.random() * 2 });
-        }
-      }
-    }
-    return e;
-  }, [nodes]);
-
-  return (
-    <svg className="absolute inset-0 w-full h-full opacity-[0.07]" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
-      {edges.map((e, i) => (
-        <motion.line
-          key={`e-${i}`}
-          x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
-          stroke="#005496"
-          strokeWidth="0.15"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: [0, 0.6, 0.3] }}
-          transition={{ duration: 2, delay: e.delay, repeat: Infinity, repeatType: 'reverse', repeatDelay: 3 }}
-        />
-      ))}
-      {nodes.map((n) => (
-        <motion.circle
-          key={`n-${n.id}`}
-          cx={n.cx} cy={n.cy} r={n.r}
-          fill="#005496"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: [0.3, 0.8, 0.3], scale: [0.8, 1.2, 0.8] }}
-          transition={{ duration: 3, delay: n.delay, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      ))}
-    </svg>
-  );
-}
-
-/* ═══════════════════════════════════════
-   Floating AI Particles — Enhanced
-   ═══════════════════════════════════════ */
-function AIParticles() {
+function FloatingDecorations() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(12)].map((_, i) => (
+      {[...Array(8)].map((_, i) => (
         <motion.div
           key={i}
           className="absolute rounded-full"
           style={{
-            width: 4 + Math.random() * 6,
-            height: 4 + Math.random() * 6,
-            background: i % 3 === 0
-              ? 'rgba(0, 84, 150, 0.15)'
-              : i % 3 === 1
-                ? 'rgba(255, 210, 0, 0.2)'
-                : 'rgba(139, 92, 246, 0.12)',
-            left: `${5 + Math.random() * 90}%`,
-            top: `${5 + Math.random() * 90}%`,
-            boxShadow: i % 3 === 0
-              ? '0 0 8px rgba(0, 84, 150, 0.3)'
-              : i % 3 === 1
-                ? '0 0 8px rgba(255, 210, 0, 0.3)'
-                : '0 0 8px rgba(139, 92, 246, 0.2)',
+            width: 10 + Math.random() * 20,
+            height: 10 + Math.random() * 20,
+            background: i % 2 === 0
+              ? 'rgba(0, 84, 150, 0.05)'
+              : 'rgba(255, 210, 0, 0.1)',
+            left: `${10 + Math.random() * 80}%`,
+            top: `${10 + Math.random() * 80}%`,
+            filter: 'blur(4px)'
           }}
           animate={{
-            y: [0, -(15 + Math.random() * 30), 0],
-            x: [0, (Math.random() - 0.5) * 30, 0],
-            opacity: [0.2, 0.8, 0.2],
-            scale: [0.8, 1.3, 0.8],
+            y: [0, -(20 + Math.random() * 30), 0],
+            x: [0, (Math.random() - 0.5) * 40, 0],
+            opacity: [0.3, 0.6, 0.3],
+            scale: [0.8, 1.2, 0.8],
           }}
           transition={{
-            duration: 4 + Math.random() * 4,
+            duration: 6 + Math.random() * 4,
             repeat: Infinity,
-            delay: i * 0.4,
+            delay: i * 0.5,
             ease: 'easeInOut',
           }}
         />
@@ -222,71 +151,10 @@ function AIParticles() {
 }
 
 /* ═══════════════════════════════════════
-   AI Pipeline Animation
-   ═══════════════════════════════════════ */
-function AIPipelineVisualizer() {
-  return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-80px' }}
-      variants={staggerContainer}
-      className="relative flex flex-col md:flex-row items-center justify-center gap-3 md:gap-0"
-    >
-      {AI_PIPELINE.map((step, i) => (
-        <motion.div key={i} variants={fadeUp} custom={i} className="flex items-center gap-0">
-          <div className="group relative flex flex-col items-center">
-            {/* Icon circle */}
-            <div
-              className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg"
-              style={{
-                background: `linear-gradient(135deg, ${step.color}10, ${step.color}05)`,
-                border: `1.5px solid ${step.color}25`,
-              }}
-            >
-              {/* Pulse ring */}
-              <motion.div
-                className="absolute inset-0 rounded-2xl"
-                style={{ border: `1.5px solid ${step.color}20` }}
-                animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0, 0.5] }}
-                transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
-              />
-              <step.icon size={24} style={{ color: step.color }} strokeWidth={1.5} />
-            </div>
-            {/* Label */}
-            <div className="mt-3 text-center">
-              <p className="text-[13px] font-semibold text-[#1e293b]">{step.label}</p>
-              <p className="text-[10px] font-medium text-[#94a3b8] mt-0.5 uppercase tracking-wider">{step.desc}</p>
-            </div>
-          </div>
-          {/* Connector line */}
-          {i < AI_PIPELINE.length - 1 && (
-            <div className="hidden md:flex items-center mx-2 md:mx-4 mb-10">
-              <motion.div
-                className="h-[2px] w-12 md:w-20 relative overflow-hidden rounded-full"
-                style={{ background: `${AI_PIPELINE[i + 1].color}15` }}
-              >
-                <motion.div
-                  className="absolute inset-y-0 left-0 w-1/2 rounded-full"
-                  style={{ background: `linear-gradient(90deg, ${step.color}, ${AI_PIPELINE[i + 1].color})` }}
-                  animate={{ x: ['-100%', '200%'] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.4, ease: 'easeInOut' }}
-                />
-              </motion.div>
-              <ChevronRight size={14} className="text-[#cbd5e1] -ml-1" />
-            </div>
-          )}
-        </motion.div>
-      ))}
-    </motion.div>
-  );
-}
-
-/* ═══════════════════════════════════════
    Main Page
    ═══════════════════════════════════════ */
 export default function ChatLandingPage() {
-  const greeting = "Chào bạn! 😊 Mình là Trợ lý Ảo của Viện Sau Đại học UFM. Bạn cần hỗ trợ thông tin gì về tuyển sinh, học phí hay chương trình đào tạo ạ?";
+  const greeting = "Chào bạn! 😊 Mình là Chatbot UFM - Trợ lý Ảo của Viện Sau Đại học UFM. Bạn cần hỗ trợ thông tin gì về tuyển sinh, học phí hay chương trình đào tạo ạ?";
   const { displayed, done } = useTypingEffect(greeting, 30);
 
   return (
@@ -295,42 +163,31 @@ export default function ChatLandingPage() {
 
       {/* ═══════════ HERO SECTION ═══════════ */}
       <section className="relative pt-[120px] pb-16 md:pt-[150px] md:pb-24 overflow-hidden">
-        {/* Neural Network Background */}
-        <NeuralNetworkBg />
+        {/* Soft background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#f8fafc] via-[#f0f7ff] to-[#e6f2fc] -z-10" />
 
-        {/* Grid overlay */}
-        <div className="absolute inset-0 ai-grid-bg pointer-events-none" />
+        <FloatingDecorations />
 
-        {/* Background decorations */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120vw] h-[600px] bg-gradient-to-b from-[#e8f4fd] via-[#f0f7ff] to-transparent rounded-[0_0_50%_50%/0_0_100px_100px] opacity-70" />
-          {/* Animated glowing orbs */}
+        {/* Background blobs */}
+        <div className="absolute inset-0 pointer-events-none -z-10">
           <motion.div
-            className="absolute top-20 right-[10%] w-[300px] h-[300px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(0,84,150,0.08), transparent 70%)' }}
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+            className="absolute top-20 right-[10%] w-[400px] h-[400px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(0,84,150,0.06), transparent 70%)', filter: 'blur(40px)' }}
+            animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.8, 0.6] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.div
-            className="absolute top-40 left-[5%] w-[250px] h-[250px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.06), transparent 70%)' }}
-            animate={{ scale: [1.1, 0.9, 1.1], opacity: [0.2, 0.5, 0.2] }}
+            className="absolute top-40 left-[5%] w-[350px] h-[350px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(255,210,0,0.08), transparent 70%)', filter: 'blur(50px)' }}
+            animate={{ scale: [1.1, 0.9, 1.1], opacity: [0.5, 0.8, 0.5] }}
             transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
           />
-          <motion.div
-            className="absolute bottom-10 right-[20%] w-[200px] h-[200px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(255,210,0,0.08), transparent 70%)' }}
-            animate={{ scale: [0.9, 1.15, 0.9], opacity: [0.25, 0.5, 0.25] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          />
         </div>
-
-        <AIParticles />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
-            {/* Left: Illustration + Tech badges */}
+            {/* Left: Illustration + Educational badges */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -338,40 +195,32 @@ export default function ChatLandingPage() {
               className="flex-1 flex justify-center order-2 lg:order-1"
             >
               <div className="relative w-[280px] h-[280px] md:w-[380px] md:h-[380px] lg:w-[440px] lg:h-[440px]">
-                {/* Rotating ring behind mascot */}
-                <motion.div
-                  className="absolute inset-[-20px] rounded-full border border-dashed border-[#005496]/10"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                />
-                <motion.div
-                  className="absolute inset-[-40px] rounded-full border border-dashed border-[#8b5cf6]/8"
-                  animate={{ rotate: -360 }}
-                  transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
-                />
+                {/* Visual rings */}
+                <div className="absolute inset-[-10px] rounded-full border border-[#005496]/10" />
+                <div className="absolute inset-[-30px] rounded-full border border-dashed border-[#0284c7]/15" />
 
                 <Image
                   src="/images/ufm_chatbot.png"
-                  alt="UFM AI Chatbot"
+                  alt="Trợ lý Tuyển sinh UFM"
                   fill
-                  className="object-contain drop-shadow-xl relative z-10"
+                  className="object-contain drop-shadow-2xl relative z-10"
                   priority
                 />
 
-                {/* Floating tech badges */}
+                {/* Educational floating badges */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1, duration: 0.6 }}
-                  className="absolute top-4 -left-4 md:top-8 md:-left-8 ai-glass px-3 py-2 rounded-xl shadow-lg z-20"
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                  className="absolute top-4 -left-4 md:top-8 md:-left-8 bg-white/90 backdrop-blur-md px-3 py-2.5 rounded-2xl shadow-xl border border-[#e2e8f0]/80 z-20"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#0ea5e9] flex items-center justify-center">
-                      <Brain size={14} className="text-white" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0284c7] to-[#0369a1] flex items-center justify-center shadow-inner">
+                      <GraduationCap size={16} className="text-white" />
                     </div>
                     <div>
-                      <p className="text-[9px] font-medium text-[#94a3b8] uppercase tracking-wider">Engine</p>
-                      <p className="text-[12px] font-bold text-[#1e293b]">LangGraph</p>
+                      <p className="text-[10px] font-semibold text-[#64748b] uppercase tracking-wider">Đào tạo</p>
+                      <p className="text-[13px] font-bold text-[#0f172a]">Sau Đại học</p>
                     </div>
                   </div>
                 </motion.div>
@@ -379,38 +228,38 @@ export default function ChatLandingPage() {
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1.2, duration: 0.6 }}
-                  className="absolute top-12 -right-2 md:top-16 md:-right-6 ai-glass px-3 py-2 rounded-xl shadow-lg z-20"
+                  transition={{ delay: 1, duration: 0.6 }}
+                  className="absolute top-16 -right-2 md:top-24 md:-right-6 bg-white/90 backdrop-blur-md px-3 py-2.5 rounded-2xl shadow-xl border border-[#e2e8f0]/80 z-20"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[#a78bfa] flex items-center justify-center">
-                      <Database size={14} className="text-white" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#eab308] to-[#ca8a04] flex items-center justify-center shadow-inner">
+                      <Star size={16} className="text-white" fill="currentColor" />
                     </div>
                     <div>
-                      <p className="text-[9px] font-medium text-[#94a3b8] uppercase tracking-wider">Search</p>
-                      <p className="text-[12px] font-bold text-[#1e293b]">Vector DB</p>
+                      <p className="text-[10px] font-semibold text-[#64748b] uppercase tracking-wider">Chất lượng</p>
+                      <p className="text-[13px] font-bold text-[#0f172a]">Hàng đầu</p>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Powered by badge */}
+                {/* Assistant badge */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8, duration: 0.6 }}
-                  className="absolute -bottom-2 -right-2 md:bottom-4 md:right-0 ai-glass px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3 z-20"
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                  className="absolute -bottom-2 -right-2 md:bottom-2 md:right-4 bg-white px-4 py-3 rounded-full shadow-[0_10px_40px_-10px_rgba(0,84,150,0.3)] border border-[#005496]/10 flex items-center gap-3 z-20"
                 >
-                  <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-[#005496] to-[#0284c7] flex items-center justify-center">
-                    <Sparkles size={16} className="text-white" />
+                  <div className="relative w-10 h-10 rounded-full bg-[#005496] flex items-center justify-center">
+                    <Bot size={20} className="text-white" />
                     <motion.div
-                      className="absolute inset-0 rounded-full bg-[#005496]/20"
-                      animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
+                      className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white"
+                      animate={{ scale: [1, 1.2, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     />
                   </div>
                   <div>
-                    <p className="text-[10px] font-medium text-[#64748b] uppercase tracking-wider">Powered by</p>
-                    <p className="text-[14px] font-bold ai-shimmer-text">AI UFM</p>
+                    <p className="text-[11px] font-medium text-[#64748b]">Tư vấn viên</p>
+                    <p className="text-[15px] font-bold text-[#005496]">Chatbot UFM</p>
                   </div>
                 </motion.div>
               </div>
@@ -425,34 +274,23 @@ export default function ChatLandingPage() {
                 custom={0}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#005496]/5 border border-[#005496]/10 mb-6"
               >
-                <div className="relative">
-                  <Bot size={14} className="text-[#005496]" />
-                  <motion.div
-                    className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400"
-                    animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                </div>
-                <span className="text-[12px] font-semibold text-[#005496] tracking-wide uppercase">Trợ lý AI Sau Đại học</span>
+                <Award size={14} className="text-[#005496]" />
+                <span className="text-[12px] font-semibold text-[#005496] tracking-wide uppercase">Cổng Tư Vấn Tuyển Sinh</span>
               </motion.div>
 
               <motion.h1
                 initial="hidden" animate="visible" variants={fadeUp} custom={1}
                 className="text-[36px] md:text-[48px] lg:text-[56px] font-bold leading-[1.15] tracking-tight text-[#0f172a] mb-5"
               >
-                Trợ lý{' '}
-                <span className="relative">
-                  <span className="ai-shimmer-text">tuyển sinh</span>
+                Khởi tạo tương lai với{' '}
+                <span className="relative inline-block mt-2">
+                  <span className="text-[#005496]">Sau Đại học UFM</span>
                   <motion.span
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ delay: 0.8, duration: 0.6, ease }}
-                    className="absolute -bottom-1 left-0 w-full h-[3px] bg-gradient-to-r from-[#ffd200] to-[#ffb800] rounded-full origin-left"
+                    className="absolute -bottom-1 left-0 w-full h-[3px] bg-[#ffd200] rounded-full origin-left"
                   />
-                </span>
-                <br />
-                <span className="text-[28px] md:text-[36px] lg:text-[42px] font-medium text-[#475569]">
-                  thông minh
                 </span>
               </motion.h1>
 
@@ -460,37 +298,37 @@ export default function ChatLandingPage() {
                 initial="hidden" animate="visible" variants={fadeUp} custom={2}
                 className="text-[16px] md:text-[18px] font-normal text-[#64748b] leading-[1.7] max-w-lg mx-auto lg:mx-0 mb-8"
               >
-                Sử dụng công nghệ <span className="font-semibold text-[#005496]">AI tiên tiến</span> và <span className="font-semibold text-[#8b5cf6]">RAG</span> để hỗ trợ tư vấn tuyển sinh Sau Đại học — chính xác, nhanh chóng, 24/7.
+                Tìm hiểu nhanh chóng và chính xác về các chương trình Thạc sĩ, Tiến sĩ tại Trường Đại học Tài chính - Marketing cùng trợ lý tư vấn trực tuyến.
               </motion.p>
 
               <motion.div
                 initial="hidden" animate="visible" variants={fadeUp} custom={3}
-                className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start"
+                className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
               >
                 <Link
                   href="/chat/create"
                   className="group relative flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-r from-[#005496] to-[#0068b8] text-white rounded-full font-semibold text-[15px] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,84,150,0.3)] hover:-translate-y-0.5 overflow-hidden w-full sm:w-auto"
                 >
                   <span className="absolute inset-0 bg-gradient-to-r from-[#0068b8] to-[#005496] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {/* Shimmer effect on hover */}
-                  <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%)', backgroundSize: '200% 100%', animation: 'ai-shimmer 2s linear infinite' }}
-                  />
-                  <MessageCircle size={17} className="relative z-10" />
-                  <span className="relative z-10">Trò chuyện ngay</span>
+                  <MessageCircle size={18} className="relative z-10" />
+                  <span className="relative z-10">Bắt đầu tư vấn ngay</span>
                 </Link>
-                <span className="text-[13px] text-[#94a3b8] font-normal flex items-center gap-1.5">
-                  <Activity size={13} className="text-emerald-400" />
-                  Online — phản hồi tức thời
-                </span>
+                
+                <a
+                  href="#thong-tin"
+                  className="flex items-center justify-center gap-2 px-8 py-4 bg-white border border-[#e2e8f0] text-[#475569] rounded-full font-semibold text-[15px] transition-all duration-300 hover:bg-[#f8fafc] hover:text-[#005496] hover:border-[#005496]/30 w-full sm:w-auto"
+                >
+                  <BookOpen size={18} />
+                  <span>Tìm hiểu thêm</span>
+                </a>
               </motion.div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════ STATS RIBBON — Glassmorphism ═══════════ */}
-      <section className="relative py-8 bg-white/80 backdrop-blur-sm border-y border-[#e2e8f0]/60">
+      {/* ═══════════ STATS RIBBON ═══════════ */}
+      <section className="relative py-8 bg-white border-y border-[#e2e8f0]/60">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }}
@@ -501,17 +339,17 @@ export default function ChatLandingPage() {
                 key={i}
                 variants={fadeUp}
                 custom={i}
-                className="group relative flex items-center gap-4 py-4 px-4 rounded-2xl transition-all duration-500 hover:bg-[#f8fafc] hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+                className="group relative flex items-center gap-4 py-4 px-4 rounded-2xl transition-all duration-500 hover:bg-[#f8fafc] hover:shadow-sm"
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110"
-                  style={{ backgroundColor: `${stat.color}10`, color: stat.color }}
+                  style={{ backgroundColor: `${stat.color}15`, color: stat.color }}
                 >
                   <stat.icon size={22} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-[26px] md:text-[30px] font-bold text-[#0f172a] leading-none tracking-tight">{stat.value}</p>
-                  <p className="text-[12px] font-medium text-[#94a3b8] mt-1">{stat.label}</p>
+                  <p className="text-[24px] md:text-[28px] font-bold text-[#0f172a] leading-none tracking-tight">{stat.value}</p>
+                  <p className="text-[12px] font-medium text-[#64748b] mt-1.5">{stat.label}</p>
                 </div>
               </motion.div>
             ))}
@@ -519,196 +357,24 @@ export default function ChatLandingPage() {
         </div>
       </section>
 
-      {/* ═══════════ AI PIPELINE SECTION ═══════════ */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-white to-[#f8fafc] relative overflow-hidden">
-        <div className="absolute inset-0 ai-grid-bg pointer-events-none opacity-50" />
-        <div className="max-w-5xl mx-auto px-6 relative z-10">
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
-            className="text-center mb-14"
-          >
-            <motion.div variants={fadeUp} custom={0}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#8b5cf6]/5 border border-[#8b5cf6]/10 mb-5"
-            >
-              <Cpu size={13} className="text-[#8b5cf6]" />
-              <span className="text-[11px] font-semibold text-[#8b5cf6] uppercase tracking-wider">How it works</span>
-            </motion.div>
-            <motion.h2 variants={fadeUp} custom={1} className="text-[28px] md:text-[36px] font-bold text-[#0f172a] tracking-tight mb-3">
-              Quy trình xử lý <span className="ai-shimmer-text">AI Pipeline</span>
-            </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-[15px] text-[#64748b] font-normal max-w-lg mx-auto">
-              Mỗi câu hỏi được xử lý qua pipeline AI đa tầng, đảm bảo phản hồi chính xác và nhanh chóng.
-            </motion.p>
-          </motion.div>
-
-          <AIPipelineVisualizer />
-        </div>
-      </section>
-
-      {/* ═══════════ CHAT PREVIEW SECTION ═══════════ */}
-      <section id="chat-area" className="py-16 md:py-24 bg-[#f8fafc] relative overflow-hidden">
-        <AIParticles />
-        <div className="max-w-4xl mx-auto px-6 relative z-10">
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
-            className="text-center mb-12"
-          >
-            <motion.h2 variants={fadeUp} custom={0} className="text-[28px] md:text-[36px] font-bold text-[#0f172a] tracking-tight mb-3">
-              Trải nghiệm <span className="text-[#005496]">ngay</span>
-            </motion.h2>
-            <motion.p variants={fadeUp} custom={1} className="text-[15px] text-[#64748b] font-normal max-w-md mx-auto">
-              Giao diện trò chuyện trực quan, dễ sử dụng. Đặt câu hỏi và nhận phản hồi tức thời.
-            </motion.p>
-          </motion.div>
-
-          {/* Chat Interface Mockup */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={scaleIn}
-            className="relative"
-          >
-            {/* Glow behind card */}
-            <div className="absolute -inset-4 bg-gradient-to-br from-[#005496]/5 via-transparent to-[#8b5cf6]/5 rounded-[36px] blur-xl" />
-
-            <div className="relative bg-white rounded-[28px] shadow-[0_20px_60px_-15px_rgba(0,84,150,0.1),0_0_0_1px_rgba(0,84,150,0.04)] overflow-hidden">
-
-              {/* Chat Header with gradient border */}
-              <div className="h-[3px] ai-gradient-border" />
-              <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#005496] to-[#0068b8]">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-10 h-10 rounded-full bg-white border border-white/20 flex items-center justify-center overflow-hidden">
-                    <Image src="/images/ufm_chatbot.png" alt="UFM Bot" width={40} height={40} className="w-full h-full object-cover" />
-                    <motion.div
-                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#005496]"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    />
-                  </div>
-                  <div>
-                    <h3 className="text-[14px] font-semibold text-white flex items-center gap-2">
-                      Trợ lý UFM
-                      <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-white/15 text-white/80 uppercase tracking-wider">AI</span>
-                    </h3>
-                    <p className="text-[11px] text-white/70 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Trực tuyến
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                    <Shield size={14} className="text-white/70" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Chat Body */}
-              <div className="px-6 py-8 min-h-[320px] md:min-h-[380px] bg-[#f8fafc] relative">
-                <div className="absolute inset-0 ai-grid-bg opacity-30" />
-
-                <div className="space-y-6 relative z-10">
-                  {/* User bubble */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.3 }}
-                    className="flex justify-end"
-                  >
-                    <div className="flex items-end gap-2.5 max-w-[80%]">
-                      <div className="bg-[#3578E5] text-white px-5 py-3.5 rounded-[16px] rounded-br-[4px] text-[14px] leading-relaxed shadow-[0_1px_4px_rgba(53,120,229,0.2)]">
-                        Cho mình hỏi điều kiện thi đầu vào Thạc sĩ ạ?
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-[#e2e8f0] flex items-center justify-center flex-shrink-0">
-                        <User size={14} className="text-[#64748b]" />
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Bot bubble */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.6 }}
-                    className="flex gap-2.5 max-w-[85%]"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-white border border-[#e2e8f0] flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm overflow-hidden">
-                      <Image src="/images/ufm_chatbot.png" alt="UFM Bot" width={32} height={32} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="bg-white border border-[#e2e8f0]/80 text-[#334155] px-5 py-4 rounded-[20px] rounded-bl-md text-[14px] leading-[1.7] shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-                      {displayed}
-                      {!done && (
-                        <span className="inline-block w-[2px] h-4 mx-1 bg-[#005496] rounded-full align-middle" style={{ animation: 'ai-typing-cursor 0.8s ease infinite' }} />
-                      )}
-                    </div>
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* Suggestion Chips */}
-              <div className="px-6 py-4 bg-white border-t border-[#f1f5f9]">
-                <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
-                  <button className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#005496] to-[#0068b8] text-white rounded-full text-[13px] font-medium whitespace-nowrap transition-all hover:shadow-md hover:-translate-y-0.5 flex-shrink-0">
-                    <Plus size={14} />
-                    Cuộc trò chuyện mới
-                  </button>
-                  {SUGGESTIONS.map((s, i) => (
-                    <button
-                      key={i}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#e2e8f0] rounded-full text-[13px] font-medium text-[#475569] whitespace-nowrap transition-all hover:border-[#005496]/30 hover:text-[#005496] hover:bg-[#f0f7ff] hover:-translate-y-0.5 hover:shadow-sm flex-shrink-0"
-                    >
-                      <s.icon size={14} style={{ color: s.color }} />
-                      {s.text}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chat Input */}
-              <div className="px-6 py-5 bg-white border-t border-[#f1f5f9]">
-                <div className="flex items-end gap-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-5 py-3.5 transition-all focus-within:border-[#005496]/40 focus-within:shadow-[0_0_0_3px_rgba(0,84,150,0.06)] focus-within:bg-white">
-                  <textarea
-                    placeholder="Bạn muốn hỏi gì?"
-                    rows={1}
-                    className="flex-1 bg-transparent border-none outline-none resize-none text-[14px] text-[#1e293b] placeholder-[#94a3b8] leading-relaxed"
-                  />
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button className="w-9 h-9 rounded-full flex items-center justify-center text-[#94a3b8] hover:text-[#005496] hover:bg-[#f0f7ff] transition-all">
-                      <Mic size={18} />
-                    </button>
-                    <button className="w-9 h-9 rounded-full bg-[#3578E5] flex items-center justify-center text-white shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
-                      <Send size={15} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══════════ FEATURES SECTION — Tech Cards ═══════════ */}
-      <section className="py-20 md:py-28 bg-white relative overflow-hidden">
-        <div className="absolute inset-0 ai-grid-bg pointer-events-none opacity-40" />
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+      {/* ═══════════ FEATURES SECTION ═══════════ */}
+      <section id="thong-tin" className="py-20 md:py-24 bg-[#f8fafc] relative">
+        <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
             className="text-center mb-16"
           >
             <motion.div variants={fadeUp} custom={0}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/5 border border-[#10b981]/10 mb-5"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/10 border border-[#10b981]/20 mb-5"
             >
-              <Layers size={13} className="text-[#10b981]" />
-              <span className="text-[11px] font-semibold text-[#10b981] uppercase tracking-wider">Core Technology</span>
+              <Award size={14} className="text-[#059669]" />
+              <span className="text-[12px] font-semibold text-[#059669] uppercase tracking-wider">Đồng hành cùng bạn</span>
             </motion.div>
             <motion.h2 variants={fadeUp} custom={1} className="text-[28px] md:text-[36px] font-bold text-[#0f172a] tracking-tight mb-4">
-              Công nghệ <span className="ai-shimmer-text">AI tiên tiến</span>
+              Tại sao chọn tư vấn cùng <span className="text-[#005496]">Chatbot UFM?</span>
             </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-[15px] md:text-[16px] font-normal text-[#64748b] max-w-lg mx-auto leading-relaxed">
-              Nền tảng kết hợp LLM, RAG và Vector Search — phản hồi chính xác, đáng tin cậy.
+            <motion.p variants={fadeUp} custom={2} className="text-[15px] md:text-[16px] font-normal text-[#64748b] max-w-xl mx-auto leading-relaxed">
+              Trợ lý tư vấn sẵn sàng hướng dẫn chi tiết các bước chuẩn bị hồ sơ, cập nhật quy chế và định hướng ngành học phù hợp cho bạn.
             </motion.p>
           </motion.div>
 
@@ -721,27 +387,144 @@ export default function ChatLandingPage() {
                 key={i}
                 variants={fadeUp}
                 custom={i}
-                className="group relative bg-[#f8fafc] rounded-[24px] p-8 border border-[#e2e8f0]/60 transition-all duration-500 hover:bg-white hover:shadow-[0_20px_60px_-15px_rgba(0,84,150,0.08)] hover:border-[#005496]/10 hover:-translate-y-1 overflow-hidden"
+                className="group relative bg-white rounded-[24px] p-8 border border-[#e2e8f0] transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(0,84,150,0.1)] hover:border-[#005496]/20 hover:-translate-y-1"
               >
-                {/* Hover glow effect */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
-                  style={{ background: `radial-gradient(circle at 30% 20%, ${feat.gradient.includes('005496') ? 'rgba(0,84,150,0.03)' : feat.gradient.includes('7c3aed') ? 'rgba(124,58,237,0.03)' : 'rgba(5,150,105,0.03)'}, transparent 70%)` }}
-                />
-                
                 <div className="relative z-10">
-                  {/* Tag */}
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#f1f5f9] text-[10px] font-bold text-[#64748b] uppercase tracking-wider mb-5">
-                    {feat.tag}
-                  </span>
-
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feat.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <feat.icon size={24} className="text-white" strokeWidth={1.5} />
+                    <feat.icon size={26} className="text-white" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-[18px] font-bold text-[#0f172a] mb-3">{feat.title}</h3>
-                  <p className="text-[14px] font-normal text-[#64748b] leading-[1.7]">{feat.desc}</p>
+                  <h3 className="text-[19px] font-bold text-[#0f172a] mb-3">{feat.title}</h3>
+                  <p className="text-[15px] font-normal text-[#64748b] leading-[1.7]">{feat.desc}</p>
                 </div>
               </motion.div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════ CHAT PREVIEW SECTION ═══════════ */}
+      <section className="py-20 bg-white relative overflow-hidden">
+        <div className="max-w-4xl mx-auto px-6 relative z-10">
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }}
+            className="text-center mb-16"
+          >
+            <motion.h2 variants={fadeUp} custom={0} className="text-[28px] md:text-[36px] font-bold text-[#0f172a] tracking-tight mb-4">
+              Giao diện <span className="text-[#005496]">Thân thiện</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={1} className="text-[15px] text-[#64748b] font-normal max-w-md mx-auto">
+              Nhắn tin tự nhiên như đang trò chuyện với chuyên viên tư vấn của phòng tuyển sinh.
+            </motion.p>
+          </motion.div>
+
+          {/* Chat Interface Mockup */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={scaleIn}
+            className="relative"
+          >
+            {/* Glow behind card */}
+            <div className="absolute -inset-4 bg-gradient-to-br from-[#005496]/5 via-transparent to-[#eab308]/5 rounded-[36px] blur-xl" />
+
+            <div className="relative bg-white rounded-[28px] shadow-[0_20px_60px_-15px_rgba(0,84,150,0.1),0_0_0_1px_rgba(0,84,150,0.04)] overflow-hidden">
+              {/* Chat Header */}
+              <div className="flex items-center justify-between px-6 py-4 bg-[#005496] border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-10 h-10 rounded-full bg-white border-2 border-white/20 flex items-center justify-center overflow-hidden">
+                    <Image src="/images/ufm_chatbot.png" alt="Chatbot UFM" width={36} height={36} className="w-full h-full object-cover" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#005496]" />
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-white flex items-center gap-2">
+                      Chatbot UFM - Tư vấn SĐH
+                    </h3>
+                    <p className="text-[12px] text-white/80 flex items-center gap-1.5 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Trực tuyến
+                    </p>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <HeaderLogoMini />
+                </div>
+              </div>
+
+              {/* Chat Body */}
+              <div className="px-6 py-8 min-h-[320px] bg-[#f8fafc]">
+                <div className="space-y-6">
+                  {/* User bubble */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className="flex justify-end"
+                  >
+                    <div className="flex items-end gap-2.5 max-w-[80%]">
+                      <div className="bg-[#005496] text-white px-5 py-3.5 rounded-[20px] rounded-br-[6px] text-[15px] leading-relaxed shadow-sm">
+                        Cho mình hỏi điều kiện dự thi Thạc sĩ ngành Quản trị kinh doanh ạ?
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-[#cbd5e1] flex items-center justify-center flex-shrink-0">
+                        <User size={16} className="text-[#64748b]" />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Bot bubble */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.6 }}
+                    className="flex gap-2.5 max-w-[85%]"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-white border border-[#e2e8f0] flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden mt-1">
+                      <Image src="/images/ufm_chatbot.png" alt="UFM Bot" width={32} height={32} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="bg-white border border-[#e2e8f0] text-[#334155] px-5 py-4 rounded-[20px] rounded-bl-[6px] text-[15px] leading-[1.7] shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                      {displayed}
+                      {!done && (
+                        <span className="inline-block w-[2px] h-4 mx-1 bg-[#005496] rounded-full align-middle" style={{ animation: 'ai-typing-cursor 0.8s ease infinite' }} />
+                      )}
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Suggestion Chips */}
+              <div className="px-6 py-4 bg-white border-t border-[#f1f5f9]">
+                <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+                  {SUGGESTIONS.map((s, i) => (
+                    <button
+                      key={i}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-[#e2e8f0] rounded-full text-[13px] font-medium text-[#475569] whitespace-nowrap hover:border-[#005496]/40 hover:text-[#005496] hover:bg-[#f8fafc] transition-colors"
+                    >
+                      <s.icon size={15} className="text-[#005496]" />
+                      {s.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chat Input */}
+              <div className="px-6 py-5 bg-white border-t border-[#f1f5f9]">
+                <div className="flex items-center gap-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-full px-5 py-2.5">
+                  <Plus size={20} className="text-[#94a3b8]" />
+                  <input
+                    type="text"
+                    disabled
+                    placeholder="Nhập câu hỏi của bạn..."
+                    className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#1e293b]"
+                  />
+                  <Mic size={20} className="text-[#94a3b8] mr-2" />
+                  <div className="w-10 h-10 rounded-full bg-[#005496] flex items-center justify-center text-white shadow-md">
+                    <Send size={16} className="-ml-0.5" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -754,10 +537,10 @@ export default function ChatLandingPage() {
             className="text-center mb-12"
           >
             <motion.h2 variants={fadeUp} custom={0} className="text-[24px] md:text-[30px] font-bold text-[#0f172a] tracking-tight mb-3">
-              Khám phá thêm
+              Thông tin Hữu ích
             </motion.h2>
-            <motion.p variants={fadeUp} custom={1} className="text-[14px] text-[#94a3b8] font-normal">
-              Kết nối với nhà trường, phòng ban và các đơn vị.
+            <motion.p variants={fadeUp} custom={1} className="text-[15px] text-[#64748b] font-normal">
+              Các liên kết nhanh đến hệ thống đào tạo của trường.
             </motion.p>
           </motion.div>
 
@@ -773,18 +556,18 @@ export default function ChatLandingPage() {
                 href={link.href}
                 target={link.href.startsWith('http') ? '_blank' : undefined}
                 rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                className="group flex items-center justify-between p-5 bg-white border border-[#e2e8f0]/60 rounded-2xl transition-all duration-300 hover:border-[#005496]/15 hover:shadow-[0_8px_30px_-10px_rgba(0,84,150,0.08)] hover:-translate-y-0.5"
+                className="group flex items-center justify-between p-5 bg-white border border-[#e2e8f0] rounded-2xl transition-all duration-300 hover:border-[#005496] hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-[#f0f7ff] flex items-center justify-center text-[#005496] group-hover:bg-[#005496] group-hover:text-white transition-all duration-300">
-                    <link.icon size={18} strokeWidth={1.5} />
+                  <div className="w-12 h-12 rounded-xl bg-[#f0f7ff] flex items-center justify-center text-[#005496] group-hover:bg-[#005496] group-hover:text-white transition-all duration-300">
+                    <link.icon size={20} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-[15px] font-semibold text-[#1e293b] group-hover:text-[#005496] transition-colors">{link.label}</p>
-                    <p className="text-[12px] text-[#94a3b8] font-normal mt-0.5">{link.desc}</p>
+                    <p className="text-[16px] font-semibold text-[#1e293b] group-hover:text-[#005496] transition-colors">{link.label}</p>
+                    <p className="text-[13px] text-[#64748b] font-normal mt-0.5">{link.desc}</p>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-[#cbd5e1] group-hover:text-[#005496] group-hover:translate-x-1 transition-all" />
+                <ChevronRight size={18} className="text-[#cbd5e1] group-hover:text-[#005496] group-hover:translate-x-1 transition-all" />
               </motion.a>
             ))}
           </motion.div>
@@ -808,17 +591,17 @@ export default function ChatLandingPage() {
                 key={i}
                 variants={fadeUp}
                 custom={i}
-                className="flex items-start gap-4 p-5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0]/40"
+                className="flex items-start gap-4 p-5 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0]/60"
               >
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${item.color}10`, color: item.color }}
+                  className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${item.color}15`, color: item.color }}
                 >
-                  <item.icon size={18} strokeWidth={1.5} />
+                  <item.icon size={20} strokeWidth={1.5} />
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-wider mb-1">{item.label}</p>
-                  <p className="text-[14px] font-medium text-[#334155]">{item.value}</p>
+                  <p className="text-[12px] font-semibold text-[#64748b] uppercase tracking-wider mb-1">{item.label}</p>
+                  <p className="text-[14px] font-medium text-[#1e293b]">{item.value}</p>
                 </div>
               </motion.div>
             ))}
@@ -826,59 +609,30 @@ export default function ChatLandingPage() {
         </div>
       </section>
 
-      {/* ═══════════ FINAL CTA — Tech-Enhanced ═══════════ */}
-      <section className="py-20 md:py-28 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#005496] to-[#003d6b]" />
-        {/* Neural pattern overlay */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="w-full h-full"
-            style={{
-              backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-            }}
-          />
+      {/* ═══════════ FINAL CTA ═══════════ */}
+      <section className="py-20 md:py-28 relative overflow-hidden bg-[#005496]">
+        {/* Abstract background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#ffd200] rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3" />
         </div>
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#ffd200] rounded-full blur-[120px] translate-x-1/3 -translate-y-1/3" />
-          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#0284c7] rounded-full blur-[100px] -translate-x-1/3 translate-y-1/3" />
-          <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#38bdf8]/10"
-            animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.1, 0.2, 0.1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </div>
+        
         <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 mb-6">
-              <Sparkles size={13} className="text-[#ffd200]" />
-              <span className="text-[11px] font-semibold text-[#ffd200] uppercase tracking-wider">AI-Powered</span>
-            </motion.div>
-            <motion.h2 variants={fadeUp} custom={1} className="text-[28px] md:text-[40px] font-bold text-white tracking-tight mb-6 leading-tight">
-              Bắt đầu cuộc trò chuyện<br className="hidden md:block" /> ngay hôm nay
+            <motion.h2 variants={fadeUp} custom={0} className="text-[30px] md:text-[40px] font-bold text-white tracking-tight mb-6 leading-tight">
+              Sẵn sàng bắt đầu hành trình<br className="hidden md:block" /> học vị mới cùng UFM?
             </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-[15px] text-white/60 font-normal max-w-md mx-auto mb-10 leading-relaxed">
-              Mở phiên tương tác với hệ thống AI để giải quyết nhanh chóng mọi thắc mắc về tuyển sinh sau đại học.
+            <motion.p variants={fadeUp} custom={1} className="text-[16px] text-white/80 font-normal max-w-md mx-auto mb-10 leading-relaxed">
+              Trợ lý Chatbot UFM luôn sẵn sàng giải đáp mọi thắc mắc của bạn về thông tin tuyển sinh 24/7.
             </motion.p>
-            <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
+            <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/chat/create"
-                className="group inline-flex items-center justify-center gap-2.5 px-10 py-4 bg-white text-[#005496] rounded-full font-semibold text-[15px] transition-all duration-300 hover:shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:-translate-y-0.5 relative overflow-hidden"
+                className="group inline-flex items-center justify-center gap-2.5 px-10 py-4 bg-[#ffd200] text-[#005496] rounded-full font-bold text-[16px] transition-all hover:bg-yellow-400 hover:shadow-lg hover:-translate-y-1"
               >
-                <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ background: 'linear-gradient(110deg, transparent 30%, rgba(0,84,150,0.05) 50%, transparent 70%)', backgroundSize: '200% 100%', animation: 'ai-shimmer 2s linear infinite' }}
-                />
-                <MessageCircle size={17} className="relative z-10" />
-                <span className="relative z-10">Bắt đầu</span>
+                <MessageCircle size={20} />
+                <span>Trò chuyện ngay</span>
               </Link>
-              <a
-                href="https://ufm.edu.vn"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 border border-white/20 text-white rounded-full font-medium text-[15px] transition-all duration-300 hover:bg-white/20 hover:-translate-y-0.5 backdrop-blur-sm"
-              >
-                <ExternalLink size={15} />
-                Website
-              </a>
             </motion.div>
           </motion.div>
         </div>
@@ -886,7 +640,7 @@ export default function ChatLandingPage() {
 
       <Footer />
 
-      {/* ═══════════ Custom scrollbar hide ═══════════ */}
+      {/* ═══════════ Utilities ═══════════ */}
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -895,7 +649,22 @@ export default function ChatLandingPage() {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
+        @keyframes ai-typing-cursor {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
       `}</style>
     </div>
+  );
+}
+
+// Simple Logo component for the chat header
+function HeaderLogoMini() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
   );
 }

@@ -151,7 +151,7 @@ export default function LeadsPage() {
                 <TableRow className="hover:bg-transparent border-none">
                   <TableHead className="w-[50px] text-center font-semibold text-slate-500 h-9 py-2 text-[13px]">STT</TableHead>
                   <TableHead className="h-9 py-2 px-4 text-[13px] font-semibold text-slate-500">Khách hàng</TableHead>
-                  <TableHead className="h-9 py-2 px-4 text-[13px] font-semibold text-slate-500">Đánh giá AI (Gemini)</TableHead>
+                  <TableHead className="h-9 py-2 px-4 text-[13px] font-semibold text-slate-500">Đánh giá (AI UFM)</TableHead>
                   <TableHead className="h-9 py-2 px-4 text-[13px] font-semibold text-slate-500 text-center">Trạng thái</TableHead>
                   <TableHead className="h-9 py-2 px-4 text-[13px] font-semibold text-slate-500 text-right">Quản lý</TableHead>
                 </TableRow>
@@ -267,7 +267,7 @@ export default function LeadsPage() {
 
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-[14px] font-bold text-slate-800 mb-1.5 flex items-center gap-1.5"><Bot className="w-4 h-4 text-[#005496]" /> Tóm tắt nhu cầu (Gemini Flash)</h4>
+                  <h4 className="text-[14px] font-bold text-slate-800 mb-1.5 flex items-center gap-1.5"><Bot className="w-4 h-4 text-[#005496]" /> Tóm tắt nhu cầu (AI UFM)</h4>
                   <div className="bg-[#005496]/5 p-4 rounded-xl text-[14px] text-slate-700 leading-relaxed font-medium border border-[#005496]/10">
                     {selectedLead.aiAnalysis?.summary || 'Hệ thống AI không thể khởi tạo tóm tắt đối với bình luận rác hoặc lỗi mô hình.'}
                   </div>

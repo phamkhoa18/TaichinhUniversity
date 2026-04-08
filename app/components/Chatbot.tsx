@@ -197,7 +197,7 @@ export default function Chatbot() {
   const [showResumePrompt, setShowResumePrompt] = useState(false);
 
   // CRM Lead Tracking States
-  const [leadId, setLeadId] = useState<string | null>(null);
+  const [hasLeadInfo, setHasLeadInfo] = useState(false);
   const [leadFormData, setLeadFormData] = useState({ fullName: '', phone: '', email: '' });
   const [isLoadingLead, setIsLoadingLead] = useState(false);
 
@@ -207,9 +207,11 @@ export default function Chatbot() {
   const hasRestoredRef = useRef(false);
 
   // Ref tracking for background silently analyzing chat
-  const bgLeadIdRef = useRef<string | null>(null);
+  const bgHasLeadInfoRef = useRef(false);
+  const bgLeadDataRef = useRef({ fullName: '', phone: '', email: '' });
   const bgMessagesRef = useRef(messages);
-  useEffect(() => { bgLeadIdRef.current = leadId; }, [leadId]);
+  useEffect(() => { bgHasLeadInfoRef.current = hasLeadInfo; }, [hasLeadInfo]);
+  useEffect(() => { bgLeadDataRef.current = leadFormData; }, [leadFormData]);
   useEffect(() => { bgMessagesRef.current = messages; }, [messages]);
 
   /* ── Restore messages & lead from localStorage on mount ── */
@@ -221,9 +223,9 @@ export default function Chatbot() {
       const savedLead = localStorage.getItem(LEAD_STORAGE_KEY);
       if (savedLead) {
         const parsedLead = JSON.parse(savedLead);
-        if (parsedLead.id) {
-          setLeadId(parsedLead.id);
-          setLeadFormData(parsedLead);
+        if (parsedLead.hasInfo) {
+          setHasLeadInfo(true);
+          if (parsedLead.fullName) setLeadFormData(parsedLead);
         }
       }
     } catch { /* ignore */ }
@@ -242,17 +244,24 @@ export default function Chatbot() {
   /* ── Silent Background Analysis Sync ── */
   useEffect(() => {
     const sendSilentAnalysis = () => {
-      const currentLeadId = bgLeadIdRef.current;
       const history = bgMessagesRef.current;
+      const data = bgLeadDataRef.current;
       
-      // Only send if there's a lead and we have some messages
-      if (currentLeadId && history.length > 1) {
+      if (bgHasLeadInfoRef.current && history.length > 1) {
+        // Đánh dấu đã gửi để tránh bị gọi đúp bởi visibilitychange và beforeunload cùng lúc
+        bgHasLeadInfoRef.current = false;
+        
         const cleanHistory = history.map((m) => ({
           role: m.sender === 'user' ? 'user' : 'assistant',
           content: m.text,
         }));
-        const payload = JSON.stringify({ chatHistory: cleanHistory });
-        navigator.sendBeacon(`/api/chat-leads/${currentLeadId}/analyze`, new Blob([payload], { type: 'application/json' }));
+        const payload = JSON.stringify({ ...data, chatHistory: cleanHistory });
+        fetch(`/api/chat-leads/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true
+        }).catch(() => {});
       }
     };
 
@@ -305,10 +314,34 @@ export default function Chatbot() {
   }, [scrollToBottom]);
 
   const handleNewChat = useCallback(() => {
+    // Send analysis for the previous chat
+    const history = bgMessagesRef.current;
+    if (bgHasLeadInfoRef.current && history.length > 1) {
+      bgHasLeadInfoRef.current = false; // Tránh gửi đúp
+      
+      const cleanHistory = history.map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+      const payload = JSON.stringify({ ...bgLeadDataRef.current, chatHistory: cleanHistory });
+      fetch(`/api/chat-leads/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true
+      }).catch(() => {});
+    }
+
     setMessages([WELCOME_MSG]);
     setShowResumePrompt(false);
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
-    setTimeout(() => inputRef.current?.focus(), 100);
+    
+    // Clear lead form to ask again
+    setHasLeadInfo(false);
+    setLeadFormData({ fullName: '', phone: '', email: '' });
+    try { 
+      localStorage.removeItem(LEAD_STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY); 
+    } catch { /* ignore */ }
   }, []);
 
   /* ── Scroll detection ── */
@@ -320,20 +353,26 @@ export default function Chatbot() {
 
   const handleEndSession = useCallback(() => {
     // Send analysis if there are messages
-    const currentLeadId = bgLeadIdRef.current;
     const history = bgMessagesRef.current;
-    if (currentLeadId && history.length > 1) {
+    if (bgHasLeadInfoRef.current && history.length > 1) {
+      bgHasLeadInfoRef.current = false; // Tránh gửi đúp
+      
       const cleanHistory = history.map((m) => ({
         role: m.sender === 'user' ? 'user' : 'assistant',
         content: m.text,
       }));
-      const payload = JSON.stringify({ chatHistory: cleanHistory });
-      navigator.sendBeacon(`/api/chat-leads/${currentLeadId}/analyze`, new Blob([payload], { type: 'application/json' }));
+      const payload = JSON.stringify({ ...bgLeadDataRef.current, chatHistory: cleanHistory });
+      fetch(`/api/chat-leads/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true
+      }).catch(() => {});
     }
 
     // Clear state completely
     setMessages([WELCOME_MSG]);
-    setLeadId(null);
+    setHasLeadInfo(false);
     setLeadFormData({ fullName: '', phone: '', email: '' });
     localStorage.removeItem(LEAD_STORAGE_KEY);
     localStorage.removeItem(STORAGE_KEY);
@@ -491,7 +530,7 @@ export default function Chatbot() {
             </div>
 
             {/* ─── BODY AREA ─── */}
-            {!leadId ? (
+            {!hasLeadInfo ? (
               <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#fafafa]">
                 <div className="w-[60px] h-[60px] bg-white shadow-sm border border-black/[0.04] rounded-2xl flex items-center justify-center mb-4">
                   <Image src="/images/logo_ufm_50nam_no_bg.png" alt="UFM" width={40} height={40} className="object-contain" />
@@ -533,19 +572,12 @@ export default function Chatbot() {
                       }
 
                       setIsLoadingLead(true);
-                      try {
-                        const res = await fetch('/api/chat-leads', {
-                          method: 'POST', headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim() })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          setLeadId(data.leadId);
-                          localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim(), id: data.leadId }));
-                          setTimeout(() => inputRef.current?.focus(), 100);
-                        } else showToast.error(data.error);
-                      } catch { showToast.error('Lỗi kết nối máy chủ'); }
-                      setIsLoadingLead(false);
+                      setTimeout(() => {
+                         setHasLeadInfo(true);
+                         localStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim(), hasInfo: true }));
+                         setTimeout(() => inputRef.current?.focus(), 100);
+                         setIsLoadingLead(false);
+                      }, 500);
                     }}
                     disabled={isLoadingLead}
                     className="w-full h-[44px] rounded-xl bg-[#3578E5] text-white text-[14px] font-bold hover:bg-[#2b69d1] active:scale-[0.98] transition-all flex items-center justify-center shadow-sm disabled:opacity-70 mt-1"
