@@ -103,7 +103,13 @@ export async function POST(req: NextRequest) {
           body: fastApiForm as any,
         })
         
-        const data = await response.json()
+        const rawText = await response.text()
+        let data: any
+        try {
+          data = JSON.parse(rawText)
+        } catch {
+          throw new Error(`AI Backend trả về lỗi (HTTP ${response.status}). Task có thể đã được queue — kiểm tra tab Tasks.`)
+        }
         
         if (!response.ok) {
           throw new Error(data.detail || 'Lỗi từ máy chủ AI')

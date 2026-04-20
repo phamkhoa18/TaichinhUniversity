@@ -817,7 +817,20 @@ export default function AIChatbotAdminPage() {
                         reference_url: composeReferenceUrl.trim() || undefined,
                       }),
                     })
-                    const json = await res.json()
+
+                    // Đọc response dưới dạng text trước, tránh crash khi Nginx trả HTML
+                    const rawText = await res.text()
+                    let json: any
+                    try {
+                      json = JSON.parse(rawText)
+                    } catch {
+                      // Nginx 502/504 trả HTML → task có thể đã được queue
+                      setComposeError('Server trả về lỗi kết nối. Task có thể đã được queue — hãy kiểm tra tab Tasks Pipeline.')
+                      setActiveTab('tasks')
+                      loadData()
+                      return
+                    }
+
                     if (!json.success) throw new Error(json.error || 'Lỗi xử lý')
 
                     setComposeSuccess(`✅ Đã chuyển đổi thành công → ${json.data.file_name} (${json.data.markdown_length} ký tự). Đang nạp vào VectorDB...`)
